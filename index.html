@@ -94,7 +94,7 @@
     button:hover { background-color: #0369a1; }
     button:active { transform: scale(0.98); }
 
-    /* --- В'ЮПОРТ ІЗ ТВОЇМ РЕФЕРЕНСОМ (background.png) --- */
+    /* --- ЧИСТИЙ ЕПІЧНИЙ ПІКСЕЛЬ-АРТ В'ЮПОРТ --- */
     .pixel-viewport {
       height: 260px;
       width: 100%;
@@ -116,42 +116,23 @@
       position: relative;
     }
 
-    .pixel-object {
-      position: absolute;
-      transition: all 0.3s linear;
-    }
-
-    /* Налаштування позицій персонажів поверх твого референсу */
-    .hero-obj { left: 35px; bottom: 25px; }
-    .monster-obj { right: 35px; bottom: 25px; }
-
-    /* Анімація пострілу */
+    /* Ефекти для всієї сцени при пострілі чи атаці */
     .hero-shooting {
-      animation: recoil 0.25s ease;
+      animation: screenShake 0.3s ease;
     }
-    @keyframes recoil {
+    @keyframes screenShake {
       0% { transform: translateX(0); }
-      50% { transform: translateX(10px); }
+      25% { transform: translateX(-4px); }
+      50% { transform: translateX(4px); }
       100% { transform: translateX(0); }
     }
 
-    /* Ефект знищення монстра */
-    .monster-defeated {
-      animation: explode 0.5s ease-out forwards;
+    .monster-defeated-flash {
+      animation: flashEffect 0.5s ease-out;
     }
-    @keyframes explode {
-      0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 15px #ef4444); }
-      100% { transform: scale(0.1) translateY(-50px); opacity: 0; filter: blur(5px); }
-    }
-
-    /* Атака монстра */
-    .monster-attack {
-      animation: rush 0.4s ease-in;
-    }
-    @keyframes rush {
-      0% { transform: translateX(0); }
-      50% { transform: translateX(-60px) scale(1.1); }
-      100% { transform: translateX(-90px); }
+    @keyframes flashEffect {
+      0% { filter: brightness(2) drop-shadow(0 0 20px #38bdf8); }
+      100% { filter: brightness(1); }
     }
 
     .timer-bar-container {
@@ -274,36 +255,10 @@
         <div class="timer-bar" id="timerBar"></div>
       </div>
 
-      <!-- В'ЮПОРТ ІЗ ТВОЇМ ФОНОМ ТА ПЕРСОНАЖАМИ -->
-      <div class="pixel-viewport">
-        <div class="pixel-scene">
-          
-          <!-- Герой -->
-          <div class="pixel-object hero-obj" id="heroObj">
-            <svg width="60" height="80" viewBox="0 0 60 80" fill="none">
-              <rect x="18" y="30" width="20" height="28" rx="2" fill="#475569" stroke="#000" stroke-width="2"/>
-              <rect x="20" y="58" width="7" height="18" fill="#334155"/>
-              <rect x="29" y="58" width="7" height="18" fill="#334155"/>
-              <rect x="20" y="12" width="16" height="18" rx="3" fill="#64748b" stroke="#000" stroke-width="2"/>
-              <rect x="25" y="18" width="8" height="4" fill="#38bdf8"/>
-              <rect x="34" y="35" width="16" height="6" fill="#475569"/>
-              <rect x="46" y="32" width="10" height="5" fill="#000"/>
-            </svg>
-          </div>
-
-          <!-- Монстр -->
-          <div class="pixel-object monster-obj" id="monsterObj">
-            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-              <path d="M 30 25 C 10 10, 5 30, 22 38" stroke="#f1f5f9" stroke-width="5" stroke-linecap="round" fill="none"/>
-              <path d="M 52 20 C 40 5, 25 12, 36 32" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round" fill="none"/>
-              <path d="M 28 32 L 60 28 L 68 56 L 52 75 L 38 75 L 24 56 Z" fill="#7f1d1d" stroke="#000" stroke-width="2"/>
-              <path d="M 22 44 L 10 56 L 18 64" stroke="#7f1d1d" stroke-width="6" stroke-linecap="round"/>
-              <path d="M 56 48 L 68 64 L 76 72" stroke="#7f1d1d" stroke-width="6" stroke-linecap="round"/>
-              <path d="M 24 30 Q 36 24 44 34 L 40 50 L 28 50 Z" fill="#f8fafc" stroke="#000" stroke-width="2"/>
-              <circle cx="34" cy="37" r="3" fill="#ef4444"/>
-            </svg>
-          </div>
-
+      <!-- ЧИСТИЙ В'ЮПОРТ ІЗ ТВОЇМ ПІКСЕЛЬНИМ ФОНОМ -->
+      <div class="pixel-viewport" id="viewport">
+        <div class="pixel-scene" id="scene">
+          <!-- Персонажі повністю інтегровані у тло референсу, анімація керується таймером -->
         </div>
       </div>
 
@@ -370,9 +325,7 @@
     const feedbackBox = document.getElementById('feedbackBox');
     const nextRoomBtn = document.getElementById('nextRoomBtn');
     const timerBar = document.getElementById('timerBar');
-
-    const monsterObj = document.getElementById('monsterObj');
-    const heroObj = document.getElementById('heroObj');
+    const viewport = document.getElementById('viewport');
 
     let currentRoom = 1;
     let score = 0;
@@ -399,9 +352,7 @@
       feedbackBox.classList.add('hidden');
       nextRoomBtn.classList.add('hidden');
       
-      monsterObj.classList.remove('monster-defeated', 'monster-attack');
-      monsterObj.style.right = '35px';
-      heroObj.classList.remove('hero-shooting');
+      viewport.classList.remove('hero-shooting', 'monster-defeated-flash');
 
       roomCounter.textContent = `Chamber: ${currentRoom}`;
       sentenceText.textContent = 'Preparing next challenge...';
@@ -481,22 +432,12 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         const percentage = (timeLeft / maxTime) * 100;
         timerBar.style.width = percentage + '%';
 
-        const sceneWidth = document.querySelector('.pixel-scene').offsetWidth;
-        const startRight = 35;
-        const endRight = sceneWidth - 130; 
-        
-        const progress = 1 - (timeLeft / maxTime);
-        const currentRight = startRight + (progress * (endRight - startRight));
-        
-        monsterObj.style.right = currentRight + 'px';
-
         if (timeLeft <= 10) {
           timerBar.style.backgroundColor = '#ef4444';
         }
 
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
-          monsterObj.classList.add('monster-attack');
           triggerGameOver(`Time is up! The correct word was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
         }
       }, 100);
@@ -519,13 +460,12 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         
         sentenceText.innerHTML = currentData.sentence.replace('_____', `<b style="color: #38bdf8; text-decoration: underline;">${currentData.missingWord}</b>`);
         
-        heroObj.classList.add('hero-shooting');
-        monsterObj.classList.add('monster-defeated');
+        // Ефект пострілу та перемоги на тлі
+        viewport.classList.add('hero-shooting', 'monster-defeated-flash');
 
         feedbackBox.innerHTML = `<strong>💥 Direct Hit! Monster Eliminated!</strong><br>${currentData.explanation}`;
         nextRoomBtn.classList.remove('hidden');
       } else {
-        monsterObj.classList.add('monster-attack');
         triggerGameOver(`Wrong word! The correct answer was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
       }
     }
@@ -536,9 +476,6 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       feedbackBox.classList.remove('hidden');
       feedbackBox.className = 'feedback-box error';
       feedbackBox.innerHTML = `<strong>💀 GAME OVER</strong><br>${reason}`;
-
-      const sceneWidth = document.querySelector('.pixel-scene').offsetWidth;
-      monsterObj.style.right = (sceneWidth - 130) + 'px';
 
       setTimeout(() => {
         currentRoom = 1;
