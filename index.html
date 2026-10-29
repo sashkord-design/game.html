@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vocab Survival: Pixel Art Edition</title>
+  <title>Vocab Survival: Pixel Art Quest</title>
   <style>
     :root {
       --bg-color: #090d16;
@@ -94,17 +94,13 @@
     button:hover { background-color: #0369a1; }
     button:active { transform: scale(0.98); }
 
-    /* --- ПІКСЕЛЬ-АРТ В'ЮПОРТ РУЇН МІСТА --- */
+    /* --- АТМОСФЕРНИЙ В'ЮПОРТ РУЇН МІСТА --- */
     .pixel-viewport {
       height: 240px;
       width: 100%;
-      background: linear-gradient(180deg, #1e2530 0%, #11151c 60%, #0d1015 100%);
-      background-image: 
-        radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-        linear-gradient(180deg, #232b38 0%, #11151c 70%, #080a0e 100%);
-      background-size: 20px 20px, 100% 100%;
+      background: linear-gradient(180deg, #1a202c 0%, #0d1117 70%, #05070a 100%);
       border-radius: 12px;
-      border: 2px solid #334155;
+      border: 2px solid var(--border-color);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -112,12 +108,13 @@
       position: relative;
     }
 
+    /* Руїни на фоні */
     .pixel-viewport::before {
       content: '';
       position: absolute;
-      bottom: 0; left: 0; width: 100%; height: 80px;
-      background: repeating-linear-gradient(90deg, #161c24, #161c24 30px, #0f141b 30px, #0f141b 65px);
-      opacity: 0.6;
+      bottom: 0; left: 0; width: 100%; height: 90px;
+      background: repeating-linear-gradient(90deg, #111827 0px, #111827 40px, #0f172a 40px, #0f172a 90px);
+      opacity: 0.7;
     }
 
     .pixel-scene {
@@ -131,87 +128,39 @@
       transition: all 0.3s linear;
     }
 
-    /* Солдат у броні */
-    .hero-sprite {
-      width: 50px;
-      height: 70px;
-      background: #475569;
-      position: relative;
-      border: 2px solid #000;
-      box-shadow: inset -4px -4px 0px rgba(0,0,0,0.4);
-    }
-    .hero-sprite::before {
-      content: '🔫';
-      position: absolute;
-      right: -22px;
-      top: 20px;
-      font-size: 1.5rem;
-    }
-    .hero-sprite::after {
-      content: '';
-      position: absolute;
-      top: 8px; left: 10px;
-      width: 26px; height: 22px;
-      background: #334155;
-      border: 2px solid #000;
-    }
+    .hero-obj { left: 40px; bottom: 15px; }
+    .monster-obj { right: 40px; bottom: 15px; }
 
-    /* Демонічний монстр з рогами */
-    .monster-sprite {
-      width: 80px;
-      height: 75px;
-      background: #7f1d1d;
-      position: relative;
-      border: 2px solid #000;
-      box-shadow: inset -6px -6px 0px rgba(0,0,0,0.5);
-    }
-    .monster-sprite::before {
-      content: '';
-      position: absolute;
-      top: -16px; right: 10px;
-      width: 25px; height: 18px;
-      background: #f1f5f9;
-      border: 2px solid #000;
-      border-radius: 50% 50% 0 0;
-    }
-    .monster-sprite::after {
-      content: '';
-      position: absolute;
-      top: 15px; right: 22px;
-      width: 10px; height: 6px;
-      background: #ef4444;
-      box-shadow: 15px 0 0 #ef4444;
-    }
-
-    .hero-obj { left: 50px; bottom: 25px; }
-    .monster-obj { right: 50px; bottom: 25px; }
-
+    /* Анімація пострілу */
     .hero-shooting {
-      animation: recoil 0.3s ease;
+      animation: recoil 0.25s ease;
     }
     @keyframes recoil {
       0% { transform: translateX(0); }
-      50% { transform: translateX(10px); }
+      50% { transform: translateX(12px); }
       100% { transform: translateX(0); }
     }
 
+    /* Ефект знищення монстра */
     .monster-defeated {
       animation: explode 0.5s ease-out forwards;
     }
     @keyframes explode {
-      0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 10px red); }
-      100% { transform: scale(0.2) translateY(-50px); opacity: 0; filter: blur(4px); }
+      0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 15px #ef4444); }
+      100% { transform: scale(0.1) translateY(-60px); opacity: 0; filter: blur(6px); }
     }
 
+    /* Атака монстра */
     .monster-attack {
       animation: rush 0.4s ease-in;
     }
     @keyframes rush {
       0% { transform: translateX(0); }
-      50% { transform: translateX(-70px) scale(1.1); }
-      100% { transform: translateX(-90px); }
+      50% { transform: translateX(-80px) scale(1.15); }
+      100% { transform: translateX(-120px); }
     }
 
+    /* Таймер-шкала */
     .timer-bar-container {
       width: 100%;
       height: 6px;
@@ -290,8 +239,8 @@
 
   <div class="container">
     <header>
-      <h1>Vocab Survival: Pixel Art</h1>
-      <p style="color: var(--text-sub)">Apocalyptic English Quest</p>
+      <h1>Vocab Survival</h1>
+      <p style="color: var(--text-sub)">Apocalyptic English Shooter</p>
     </header>
 
     <div class="setup-panel" id="setupPanel">
@@ -332,14 +281,49 @@
         <div class="timer-bar" id="timerBar"></div>
       </div>
 
+      <!-- В'ЮПОРТ ІЗ ВЕКТОРНИМИ СПРАЙТАМИ ПЕРСОНАЖІВ -->
       <div class="pixel-viewport">
         <div class="pixel-scene">
+          
+          <!-- Спрайт Героя-Бійця -->
           <div class="pixel-object hero-obj" id="heroObj">
-            <div class="hero-sprite"></div>
+            <svg width="70" height="90" viewBox="0 0 70 90" fill="none">
+              <!-- Тіло/Броня -->
+              <rect x="20" y="35" width="22" height="30" rx="3" fill="#475569" stroke="#0f172a" stroke-width="2"/>
+              <rect x="24" y="40" width="14" height="18" fill="#334155"/>
+              <!-- Ноги -->
+              <rect x="22" y="65" width="8" height="20" fill="#334155"/>
+              <rect x="32" y="65" width="8" height="20" fill="#334155"/>
+              <!-- Голова/Шолом -->
+              <rect x="22" y="15" width="18" height="20" rx="4" fill="#64748b" stroke="#0f172a" stroke-width="2"/>
+              <rect x="28" y="22" width="12" height="5" fill="#38bdf8"/> <!-- Окуляри/візор -->
+              <!-- Рука з пістолетом -->
+              <rect x="38" y="38" width="16" height="7" fill="#475569"/>
+              <rect x="52" y="35" width="14" height="6" fill="#0f172a"/> <!-- Пістолет -->
+              <rect x="50" y="41" width="4" height="6" fill="#0f172a"/>
+            </svg>
           </div>
+
+          <!-- Спрайт Рогатого Демона/Монстра з референсу -->
           <div class="pixel-object monster-obj" id="monsterObj">
-            <div class="monster-sprite"></div>
+            <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+              <!-- Роги (як у референса) -->
+              <path d="M 30 25 C 10 10, 5 30, 25 40" stroke="#f1f5f9" stroke-width="6" stroke-linecap="round" fill="none"/>
+              <path d="M 60 20 C 50 0, 30 10, 45 35" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" fill="none"/>
+              <!-- Тіло монстра (темно-червоне) -->
+              <path d="M 35 35 L 75 30 L 85 65 L 65 90 L 45 90 L 30 65 Z" fill="#7f1d1d" stroke="#450a0a" stroke-width="3"/>
+              <!-- Лапи з кігтями -->
+              <path d="M 25 50 L 10 65 L 20 75" stroke="#7f1d1d" stroke-width="6" stroke-linecap="round"/>
+              <path d="M 70 55 L 85 75 L 95 85" stroke="#7f1d1d" stroke-width="6" stroke-linecap="round"/>
+              <!-- Череп/Обличчя -->
+              <path d="M 25 35 Q 35 25 50 35 L 45 55 L 30 55 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="2"/>
+              <!-- Червоне око -->
+              <circle cx="38" cy="42" r="3" fill="#ef4444"/>
+              <!-- Зуби -->
+              <path d="M 30 50 L 42 50 M 32 48 L 32 52 M 36 48 L 36 52 M 40 48 L 40 52" stroke="#0f172a" stroke-width="2"/>
+            </svg>
           </div>
+
         </div>
       </div>
 
@@ -436,7 +420,7 @@
       nextRoomBtn.classList.add('hidden');
       
       monsterObj.classList.remove('monster-defeated', 'monster-attack');
-      monsterObj.style.right = '50px';
+      monsterObj.style.right = '40px';
       heroObj.classList.remove('hero-shooting');
 
       roomCounter.textContent = `Chamber: ${currentRoom}`;
@@ -518,7 +502,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         timerBar.style.width = percentage + '%';
 
         const sceneWidth = document.querySelector('.pixel-scene').offsetWidth;
-        const startRight = 50;
+        const startRight = 40;
         const endRight = sceneWidth - 140; 
         
         const progress = 1 - (timeLeft / maxTime);
