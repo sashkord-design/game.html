@@ -158,10 +158,10 @@
       display: inline-block;
     }
 
-    /* Точне позиціонування: Двері та герой біля переднього правого краю */
+    /* Точне позиціонування: Двері та герой праворуч ближче до нас */
     .monster-obj { left: 15px; bottom: 15px; }
-    .hero-obj { right: 80px; bottom: 30px; }
-    .door-obj { right: 70px; bottom: 10px; }
+    .hero-obj { right: 35px; bottom: 35px; }
+    .door-obj { right: 15px; bottom: 15px; }
 
     .door-sprite {
       font-size: 2.4rem;
@@ -174,7 +174,7 @@
       opacity: 0.3;
     }
 
-    /* Панель з 4 варіантами відповідей */
+    /* Панель з 4 варіантами */
     .options-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -311,7 +311,6 @@
 
       <div class="sentence-box" id="sentenceText">Loading next challenge...</div>
 
-      <!-- Панель з 4 варіантами відповідей -->
       <div class="options-grid" id="optionsContainer">
         <button class="option-btn" onclick="checkAnswer(this.textContent)">-</button>
         <button class="option-btn" onclick="checkAnswer(this.textContent)">-</button>
@@ -485,7 +484,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         timerBar.style.width = percentage + '%';
 
         const progress = 1 - (timeLeft / maxTime);
-        const currentLeft = 15 + (progress * 55);
+        const currentLeft = 15 + (progress * 90);
         const currentBottom = 15 + (progress * 15);
         monsterObj.style.left = currentLeft + 'px';
         monsterObj.style.bottom = currentBottom + 'px';
@@ -531,8 +530,8 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       feedbackBox.className = 'feedback-box error';
       feedbackBox.innerHTML = `<strong>💀 GAME OVER</strong><br>${reason}`;
 
-      monsterObj.style.left = '75px';
-      monsterObj.style.bottom = '35px';
+      monsterObj.style.left = '115px';
+      monsterObj.style.bottom = '30px';
 
       setTimeout(() => {
         currentRoom = 1;
