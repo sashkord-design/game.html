@@ -111,7 +111,7 @@
     button:hover { background-color: #0369a1; }
     button:active { transform: scale(0.98); }
 
-    /* --- ІЗОМЕТРИЧНА КІМНАТА --- */
+    /* --- ІЗОМЕТРИЧНА КІМНАТА 3D --- */
     .iso-viewport {
       height: 220px;
       width: 100%;
@@ -127,28 +127,26 @@
     }
 
     .iso-room {
-      width: 320px;
-      height: 200px;
+      width: 280px;
+      height: 180px;
       background-color: #1e293b;
       background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-      background-size: 32px 32px;
-      transform: rotateX(60deg) rotateZ(-35deg);
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 28px 28px;
+      transform: rotateX(58deg) rotateZ(-38deg);
       transform-style: preserve-3d;
-      box-shadow: -15px 15px 30px rgba(0,0,0,0.7), inset 0 0 0 2px #334155;
+      box-shadow: -15px 15px 30px rgba(0,0,0,0.8), inset 0 0 0 2px #38bdf8;
       position: relative;
-      transition: transform 0.5s ease;
     }
 
-    /* Стіни кімнати */
     .iso-room::before {
       content: '';
       position: absolute;
-      top: -40px;
+      top: -35px;
       left: 0;
       width: 100%;
-      height: 40px;
+      height: 35px;
       background: #0f172a;
       transform: rotateX(-90deg);
       transform-origin: bottom;
@@ -159,57 +157,61 @@
       content: '';
       position: absolute;
       top: 0;
-      right: -40px;
-      width: 40px;
+      right: -35px;
+      width: 35px;
       height: 100%;
-      background: #1e293b;
+      background: #111827;
       transform: rotateY(90deg);
       transform-origin: left;
       border-right: 2px solid #0284c7;
     }
 
-    /* Об'єкти всередині (персонаж, двері, монстр) */
     .iso-object {
       position: absolute;
       transform-style: preserve-3d;
-      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.3s linear;
     }
 
     .iso-sprite {
-      font-size: 2.8rem;
-      transform: rotateZ(35deg) rotateX(-60deg) translateY(-20px);
-      filter: drop-shadow(5px 10px 4px rgba(0,0,0,0.6));
+      font-size: 2.6rem;
+      transform: rotateZ(38deg) rotateX(-58deg) translateY(-20px);
+      filter: drop-shadow(4px 8px 5px rgba(0,0,0,0.7));
       display: inline-block;
     }
 
-    /* Позиціонування на сітці підлоги */
-    .hero-obj {
-      left: 30px;
-      top: 80px;
-    }
-
-    .monster-obj {
-      right: 30px;
-      top: 80px;
-    }
-
-    .door-obj {
-      right: 10px;
-      top: 10px;
-    }
+    /* Нове позиціонування: Монстр зліва внизу, Герой біля дверей праворуч */
+    .monster-obj { left: 15px; bottom: 15px; }
+    .hero-obj { right: 25px; top: 35px; }
+    .door-obj { right: 10px; top: 10px; }
 
     .door-sprite {
-      font-size: 2.5rem;
-      transform: rotateZ(35deg) rotateX(-60deg) translateY(-15px);
+      font-size: 2.4rem;
+      transform: rotateZ(38deg) rotateX(-58deg) translateY(-15px);
       transition: transform 0.5s ease, opacity 0.5s ease;
     }
 
     .door-open .door-sprite {
-      transform: rotateZ(35deg) rotateX(-60deg) translateY(-60px) scale(0.8);
+      transform: rotateZ(38deg) rotateX(-58deg) translateY(-60px) scale(0.7);
       opacity: 0.3;
     }
 
-    /* --- СТАТИСТИКА ТА ПАНЕЛІ --- */
+    /* Таймер-шкала */
+    .timer-bar-container {
+      width: 100%;
+      height: 6px;
+      background-color: #0f172a;
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .timer-bar {
+      height: 100%;
+      width: 100%;
+      background-color: #38bdf8;
+      transition: width 0.1s linear, background-color 0.3s;
+    }
+
     .stats-bar {
       display: flex;
       justify-content: space-between;
@@ -253,8 +255,8 @@
 
     <div class="setup-panel" id="setupPanel">
       <div class="col">
-        <label>Gemini API Key (Optional / Fallback active)</label>
-        <input type="password" id="apiKeyInput" placeholder="Paste your Gemini API key...">
+        <label>Gemini API Key (Optional)</label>
+        <input type="password" id="apiKeyInput" placeholder="Paste Gemini key (or leave empty to play offline)...">
       </div>
       <div class="row">
         <div class="col">
@@ -285,17 +287,20 @@
         <span id="scoreCounter">Escaped: 0</span>
       </div>
 
-      <!-- В'юпорт ізометричної кімнати -->
+      <div class="timer-bar-container">
+        <div class="timer-bar" id="timerBar"></div>
+      </div>
+
       <div class="iso-viewport">
         <div class="iso-room">
-          <div class="iso-object hero-obj" id="heroObj">
-            <span class="iso-sprite">🧍‍♂️</span>
+          <div class="iso-object monster-obj" id="monsterObj">
+            <span class="iso-sprite">👾</span>
           </div>
           <div class="iso-object door-obj" id="doorObj">
             <span class="iso-sprite door-sprite">🚪</span>
           </div>
-          <div class="iso-object monster-obj" id="monsterObj">
-            <span class="iso-sprite">👾</span>
+          <div class="iso-object hero-obj" id="heroObj">
+            <span class="iso-sprite">🧍‍♂️</span>
           </div>
         </div>
       </div>
@@ -356,6 +361,7 @@
     const submitBtn = document.getElementById('submitBtn');
     const feedbackBox = document.getElementById('feedbackBox');
     const nextRoomBtn = document.getElementById('nextRoomBtn');
+    const timerBar = document.getElementById('timerBar');
 
     const monsterObj = document.getElementById('monsterObj');
     const heroObj = document.getElementById('heroObj');
@@ -364,6 +370,10 @@
     let currentRoom = 1;
     let score = 0;
     let currentData = null;
+
+    let timerInterval = null;
+    let timeLeft = 30; // 30 секунд на кімнату
+    const maxTime = 30;
 
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) apiKeyInput.value = savedKey;
@@ -384,14 +394,13 @@
       feedbackBox.classList.add('hidden');
       nextRoomBtn.classList.add('hidden');
       
-      // Скинути позиції в ізометрії
-      monsterObj.style.right = '30px';
-      monsterObj.style.left = 'auto';
-      heroObj.style.left = '30px';
+      // Початкові позиції: монстр зліва внизу, герой біля дверей праворуч
+      monsterObj.style.left = '15px';
+      monsterObj.style.bottom = '15px';
       doorObj.classList.remove('door-open');
 
       roomCounter.textContent = `Chamber: ${currentRoom}`;
-      sentenceText.textContent = 'Generating next chamber challenge...';
+      sentenceText.textContent = 'Preparing next challenge...';
 
       const apiKey = apiKeyInput.value.trim();
       const theme = themeSelect.value;
@@ -399,8 +408,12 @@
 
       if (!apiKey) {
         useFallbackChallenge();
+        startTimer();
         return;
       }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
       const prompt = `Act as an English survival game engine. Generate a sentence with ONE missing word (represented by blanks like "_____") based on the theme "${theme}" and grammar level "${level}".
@@ -413,8 +426,10 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
+        clearTimeout(timeoutId);
 
         if (!response.ok) throw new Error('API limit reached');
 
@@ -427,6 +442,8 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       } catch (err) {
         useFallbackChallenge();
       }
+
+      startTimer();
     }
 
     function useFallbackChallenge() {
@@ -435,11 +452,43 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       sentenceText.textContent = currentData.sentence;
     }
 
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeLeft = maxTime;
+      timerBar.style.width = '100%';
+      timerBar.style.backgroundColor = '#38bdf8';
+
+      timerInterval = setInterval(() => {
+        timeLeft -= 0.1;
+        const percentage = (timeLeft / maxTime) * 100;
+        timerBar.style.width = percentage + '%';
+
+        // Монстр плавно рухається від лівого нижнього кута (left: 15px) до героя біля дверей (left: 170px)
+        const progress = 1 - (timeLeft / maxTime);
+        const currentLeft = 15 + (progress * 155);
+        const currentBottom = 15 + (progress * 80);
+        monsterObj.style.left = currentLeft + 'px';
+        monsterObj.style.bottom = currentBottom + 'px';
+
+        if (timeLeft <= 10) {
+          timerBar.style.backgroundColor = '#ef4444'; // червоніє під кінець
+        }
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          triggerGameOver("Time is up! The monster caught you.");
+        }
+      }, 100);
+    }
+
     function checkAnswer() {
       if (!currentData) return;
       const userAns = answerInput.value.trim().toLowerCase();
       const correctAns = currentData.missingWord.toLowerCase();
 
+      if (!userAns) return;
+
+      clearInterval(timerInterval);
       answerInput.disabled = true;
       submitBtn.classList.add('hidden');
       feedbackBox.classList.remove('hidden');
@@ -450,25 +499,31 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         feedbackBox.className = 'feedback-box success';
         feedbackBox.innerHTML = `<strong>🎉 Correct! Door unlocked!</strong><br>${currentData.explanation}`;
         
-        // Ізометричні анімації виграшу: двері відчиняються, герой іде до дверей
         doorObj.classList.add('door-open');
-        heroObj.style.left = '230px';
         nextRoomBtn.classList.remove('hidden');
       } else {
-        feedbackBox.className = 'feedback-box error';
-        feedbackBox.innerHTML = `<strong>💀 Caught by the monster!</strong><br>Correct word was: <b>${currentData.missingWord}</b><br>${currentData.explanation}`;
-        
-        // Монстр підбігає прямо до героя
-        monsterObj.style.right = 'auto';
-        monsterObj.style.left = '60px';
-
-        setTimeout(() => {
-          currentRoom = 1;
-          score = 0;
-          setupPanel.classList.remove('hidden');
-          gamePanel.classList.add('hidden');
-        }, 6000);
+        triggerGameOver(`Wrong word! Correct was: <b>${currentData.missingWord}</b><br>${currentData.explanation}`);
       }
+    }
+
+    function triggerGameOver(reason) {
+      clearInterval(timerInterval);
+      answerInput.disabled = true;
+      submitBtn.classList.add('hidden');
+      feedbackBox.classList.remove('hidden');
+      feedbackBox.className = 'feedback-box error';
+      feedbackBox.innerHTML = `<strong>💀 GAME OVER</strong><br>${reason}`;
+
+      // Монстр нападає на героя
+      monsterObj.style.left = '200px';
+      monsterObj.style.bottom = '110px';
+
+      setTimeout(() => {
+        currentRoom = 1;
+        score = 0;
+        setupPanel.classList.remove('hidden');
+        gamePanel.classList.add('hidden');
+      }, 5000);
     }
 
     submitBtn.addEventListener('click', checkAnswer);
