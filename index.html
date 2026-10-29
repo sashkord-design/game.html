@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escape Vocab Room</title>
+  <title>Escape Vocab Room 3D</title>
   <style>
     :root {
-      --bg-color: #0f172a;
+      --bg-color: #090d16;
       --card-bg: #1e293b;
       --accent-color: #ef4444;
       --accent-success: #22c55e;
@@ -30,6 +30,7 @@
       flex-direction: column;
       align-items: center;
       padding: 1.5rem;
+      overflow-x: hidden;
     }
 
     .container {
@@ -48,6 +49,8 @@
       font-size: 1.8rem;
       color: #f1f5f9;
       margin-bottom: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .setup-panel, .game-panel {
@@ -58,7 +61,7 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
     }
 
     .row {
@@ -108,33 +111,105 @@
     button:hover { background-color: #0369a1; }
     button:active { transform: scale(0.98); }
 
-    .room-visual {
-      background: linear-gradient(to bottom, #111827, #1f2937);
-      height: 160px;
-      border-radius: 10px;
+    /* --- ІЗОМЕТРИЧНА КІМНАТА --- */
+    .iso-viewport {
+      height: 220px;
+      width: 100%;
+      background: radial-gradient(circle at center, #1e293b 0%, #090d16 80%);
+      border-radius: 12px;
       border: 1px solid var(--border-color);
-      position: relative;
-      overflow: hidden;
+      perspective: 800px;
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-      padding: 0 2rem;
+      overflow: hidden;
+      position: relative;
     }
 
-    .hero {
-      font-size: 2.5rem;
-      transition: transform 0.3s;
-      z-index: 2;
+    .iso-room {
+      width: 320px;
+      height: 200px;
+      background-color: #1e293b;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+      transform: rotateX(60deg) rotateZ(-35deg);
+      transform-style: preserve-3d;
+      box-shadow: -15px 15px 30px rgba(0,0,0,0.7), inset 0 0 0 2px #334155;
+      position: relative;
+      transition: transform 0.5s ease;
     }
 
-    .monster {
-      font-size: 2.5rem;
+    /* Стіни кімнати */
+    .iso-room::before {
+      content: '';
       position: absolute;
-      right: 20px;
-      transition: right 0.5s linear;
-      z-index: 2;
+      top: -40px;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      background: #0f172a;
+      transform: rotateX(-90deg);
+      transform-origin: bottom;
+      border-top: 2px solid #38bdf8;
     }
 
+    .iso-room::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: -40px;
+      width: 40px;
+      height: 100%;
+      background: #1e293b;
+      transform: rotateY(90deg);
+      transform-origin: left;
+      border-right: 2px solid #0284c7;
+    }
+
+    /* Об'єкти всередині (персонаж, двері, монстр) */
+    .iso-object {
+      position: absolute;
+      transform-style: preserve-3d;
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .iso-sprite {
+      font-size: 2.8rem;
+      transform: rotateZ(35deg) rotateX(-60deg) translateY(-20px);
+      filter: drop-shadow(5px 10px 4px rgba(0,0,0,0.6));
+      display: inline-block;
+    }
+
+    /* Позиціонування на сітці підлоги */
+    .hero-obj {
+      left: 30px;
+      top: 80px;
+    }
+
+    .monster-obj {
+      right: 30px;
+      top: 80px;
+    }
+
+    .door-obj {
+      right: 10px;
+      top: 10px;
+    }
+
+    .door-sprite {
+      font-size: 2.5rem;
+      transform: rotateZ(35deg) rotateX(-60deg) translateY(-15px);
+      transition: transform 0.5s ease, opacity 0.5s ease;
+    }
+
+    .door-open .door-sprite {
+      transform: rotateZ(35deg) rotateX(-60deg) translateY(-60px) scale(0.8);
+      opacity: 0.3;
+    }
+
+    /* --- СТАТИСТИКА ТА ПАНЕЛІ --- */
     .stats-bar {
       display: flex;
       justify-content: space-between;
@@ -172,19 +247,18 @@
 
   <div class="container">
     <header>
-      <h1>Escape the Room</h1>
-      <p style="color: var(--text-sub)">English Grammar & Vocabulary Survival</p>
+      <h1>Escape Room 3D</h1>
+      <p style="color: var(--text-sub)">Isometric Vocabulary Quest</p>
     </header>
 
-    <!-- Панель налаштування / Ключ та теми -->
     <div class="setup-panel" id="setupPanel">
       <div class="col">
-        <label>Gemini API Key</label>
-        <input type="password" id="apiKeyInput" placeholder="Paste your free Gemini API key...">
+        <label>Gemini API Key (Optional / Fallback active)</label>
+        <input type="password" id="apiKeyInput" placeholder="Paste your Gemini API key...">
       </div>
       <div class="row">
         <div class="col">
-data-theme        <label>Theme</label>
+          <label>Theme</label>
           <select id="themeSelect">
             <option value="Culture & Art">Culture & Art</option>
             <option value="Politics & Society">Politics & Society</option>
@@ -196,26 +270,34 @@ data-theme        <label>Theme</label>
         <div class="col">
           <label>Grammar Level</label>
           <select id="levelSelect">
-            <option value="Intermediate (Mixed Tenses)">Intermediate (Mixed Tenses)</option>
-            <option value="Advanced (Complex Structures & Passive)">Advanced (Complex & Passive)</option>
-            <option value="Business / Formal">Business / Formal</option>
+            <option value="Intermediate">Intermediate (Mixed Tenses)</option>
+            <option value="Advanced">Advanced (Complex Structures)</option>
+            <option value="Business">Business / Formal</option>
           </select>
         </div>
       </div>
       <button id="startBtn">Start Game</button>
     </div>
 
-    <!-- Ігрова панель -->
     <div class="game-panel hidden" id="gamePanel">
       <div class="stats-bar">
-        <span id="roomCounter">Room: 1</span>
+        <span id="roomCounter">Chamber: 1</span>
         <span id="scoreCounter">Escaped: 0</span>
       </div>
 
-      <div class="room-visual">
-        <div class="hero" id="heroEmoji">🧍‍♂️</div>
-        <div style="font-size: 2rem; color: #475569;">🚪 Locked Door</div>
-        <div class="monster" id="monsterEmoji">👾</div>
+      <!-- В'юпорт ізометричної кімнати -->
+      <div class="iso-viewport">
+        <div class="iso-room">
+          <div class="iso-object hero-obj" id="heroObj">
+            <span class="iso-sprite">🧍‍♂️</span>
+          </div>
+          <div class="iso-object door-obj" id="doorObj">
+            <span class="iso-sprite door-sprite">🚪</span>
+          </div>
+          <div class="iso-object monster-obj" id="monsterObj">
+            <span class="iso-sprite">👾</span>
+          </div>
+        </div>
       </div>
 
       <div class="sentence-box" id="sentenceText">Loading next challenge...</div>
@@ -227,11 +309,39 @@ data-theme        <label>Theme</label>
 
       <div class="feedback-box" id="feedbackBox"></div>
       
-      <button id="nextRoomBtn" class="hidden">Next Room ➔</button>
+      <button id="nextRoomBtn" class="hidden">Enter Next Chamber ➔</button>
     </div>
   </div>
 
   <script>
+    const fallbackDatabase = [
+      {
+        sentence: "The heavy storm managed to _____ power supplies across the entire city.",
+        missingWord: "disrupt",
+        explanation: "Слово 'disrupt' означає порушувати нормальний хід процесу або роботи."
+      },
+      {
+        sentence: "He was advised by his doctor because he is slightly _____ and needs more cardio.",
+        missingWord: "overweight",
+        explanation: "'Overweight' — прикметник, що означає наявність надлишкової ваги."
+      },
+      {
+        sentence: "The ancient painting was preserved in the national _____ for decades.",
+        missingWord: "museum",
+        explanation: "У контексті культури та мистецтва об'єктом зберігання є музей (museum)."
+      },
+      {
+        sentence: "Political leaders tried to _____ an agreement before the summit ended.",
+        missingWord: "reach",
+        explanation: "Стійкий вираз 'to reach an agreement' (досягти угоди)."
+      },
+      {
+        sentence: "Climate change continues to _____ natural habitats worldwide.",
+        missingWord: "threaten",
+        explanation: "Дієслово 'threaten' (загрожувати) вживається у теперішньому тривалому часі."
+      }
+    ];
+
     const setupPanel = document.getElementById('setupPanel');
     const gamePanel = document.getElementById('gamePanel');
     const apiKeyInput = document.getElementById('apiKeyInput');
@@ -246,21 +356,21 @@ data-theme        <label>Theme</label>
     const submitBtn = document.getElementById('submitBtn');
     const feedbackBox = document.getElementById('feedbackBox');
     const nextRoomBtn = document.getElementById('nextRoomBtn');
-    const monsterEmoji = document.getElementById('monsterEmoji');
+
+    const monsterObj = document.getElementById('monsterObj');
+    const heroObj = document.getElementById('heroObj');
+    const doorObj = document.getElementById('doorObj');
 
     let currentRoom = 1;
     let score = 0;
     let currentData = null;
-    let monsterPosition = 80; // відсотки справа
 
-    // Зберігаємо ключ у пам'яті
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) apiKeyInput.value = savedKey;
 
     startBtn.addEventListener('click', () => {
       const key = apiKeyInput.value.trim();
-      if (!key) return alert('Please enter your Gemini API key.');
-      localStorage.setItem('gemini_api_key', key);
+      if (key) localStorage.setItem('gemini_api_key', key);
 
       setupPanel.classList.add('hidden');
       gamePanel.classList.remove('hidden');
@@ -273,18 +383,26 @@ data-theme        <label>Theme</label>
       submitBtn.classList.remove('hidden');
       feedbackBox.classList.add('hidden');
       nextRoomBtn.classList.add('hidden');
-      monsterPosition = 80;
-      monsterEmoji.style.right = monsterPosition + 'px';
-      roomCounter.textContent = `Room: ${currentRoom}`;
+      
+      // Скинути позиції в ізометрії
+      monsterObj.style.right = '30px';
+      monsterObj.style.left = 'auto';
+      heroObj.style.left = '30px';
+      doorObj.classList.remove('door-open');
 
+      roomCounter.textContent = `Chamber: ${currentRoom}`;
       sentenceText.textContent = 'Generating next chamber challenge...';
 
       const apiKey = apiKeyInput.value.trim();
       const theme = themeSelect.value;
       const level = levelSelect.value;
 
+      if (!apiKey) {
+        useFallbackChallenge();
+        return;
+      }
+
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-      
       const prompt = `Act as an English survival game engine. Generate a sentence with ONE missing word (represented by blanks like "_____") based on the theme "${theme}" and grammar level "${level}".
 Return ONLY a raw JSON object (no markdown backticks) with exact keys:
 - "sentence": "The sentence with _____ for the missing word."
@@ -298,7 +416,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
-        if (!response.ok) throw new Error('API Error or Quota limit reached.');
+        if (!response.ok) throw new Error('API limit reached');
 
         const data = await response.json();
         let rawText = data.candidates[0].content.parts[0].text;
@@ -307,9 +425,14 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         currentData = JSON.parse(rawText);
         sentenceText.textContent = currentData.sentence;
       } catch (err) {
-        sentenceText.textContent = 'Error loading challenge. Check API key or quota.';
-        console.error(err);
+        useFallbackChallenge();
       }
+    }
+
+    function useFallbackChallenge() {
+      const randomIndex = Math.floor(Math.random() * fallbackDatabase.length);
+      currentData = fallbackDatabase[randomIndex];
+      sentenceText.textContent = currentData.sentence;
     }
 
     function checkAnswer() {
@@ -326,13 +449,19 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         scoreCounter.textContent = `Escaped: ${score}`;
         feedbackBox.className = 'feedback-box success';
         feedbackBox.innerHTML = `<strong>🎉 Correct! Door unlocked!</strong><br>${currentData.explanation}`;
-        monsterEmoji.style.right = '-50px'; // монстер відступає
+        
+        // Ізометричні анімації виграшу: двері відчиняються, герой іде до дверей
+        doorObj.classList.add('door-open');
+        heroObj.style.left = '230px';
         nextRoomBtn.classList.remove('hidden');
       } else {
         feedbackBox.className = 'feedback-box error';
         feedbackBox.innerHTML = `<strong>💀 Caught by the monster!</strong><br>Correct word was: <b>${currentData.missingWord}</b><br>${currentData.explanation}`;
-        monsterEmoji.style.right = '20px'; // монстр нападає
-        // Можна додати перезапуск або кнопку спроби знову
+        
+        // Монстр підбігає прямо до героя
+        monsterObj.style.right = 'auto';
+        monsterObj.style.left = '60px';
+
         setTimeout(() => {
           currentRoom = 1;
           score = 0;
