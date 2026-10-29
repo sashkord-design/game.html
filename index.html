@@ -460,7 +460,7 @@
     let askedSentences = [];
 
     let timerInterval = null;
-    const maxTime = 11.8; // Збільшено швидкість на 15% (час скорочено до 11.8с)
+    const maxTime = 13.5; // Час таймера залишився незмінним
     let timeLeft = maxTime;
 
     const ambientMusic = new Audio('ambient_music.mp3');
@@ -597,18 +597,21 @@ Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at 
 
         const sceneWidth = document.querySelector('.pixel-scene').offsetWidth;
         const startLeft = sceneWidth - 160; 
-        const endLeft = 210; // Синхронізована кінцева точка
+        const endLeft = 210; 
         
         const progress = 1 - (timeLeft / maxTime);
-        const currentLeft = startLeft - (progress * (startLeft - endLeft));
+        // Збільшуємо пройдений шлях монстра на 15% (множник 1.15), щоб він рухався швидше при незмінному таймері
+        let adjustedProgress = progress * 1.15;
+        if (adjustedProgress > 1) adjustedProgress = 1;
+
+        const currentLeft = startLeft - (adjustedProgress * (startLeft - endLeft));
         
         monsterSprite.style.left = currentLeft + 'px';
 
-        if (timeLeft <= 4) {
+        if (timeLeft <= 5) {
           timerBar.style.backgroundColor = '#ef4444';
         }
 
-        // Таймер і рух монстра тепер ідеально збігаються за часом
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
           monsterBreath.pause();
