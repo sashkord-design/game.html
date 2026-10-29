@@ -158,11 +158,10 @@
       display: inline-block;
     }
 
-    /* Позиціонування згідно з твоїм малюнком */
+    /* Точне позиціонування за твоїм малюнком */
     .monster-obj { left: 15px; bottom: 15px; }
-    .hero-obj { right: 65px; top: 45px; }
-    /* Двері тепер на правій стіні ближче до переднього краю */
-    .door-obj { right: 35px; bottom: 10px; }
+    .hero-obj { right: 25px; bottom: 25px; }
+    .door-obj { right: 10px; bottom: 10px; }
 
     .door-sprite {
       font-size: 2.4rem;
@@ -444,7 +443,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
 
         const progress = 1 - (timeLeft / maxTime);
         const currentLeft = 15 + (progress * 130);
-        const currentBottom = 15 + (progress * 30);
+        const currentBottom = 15 + (progress * 10);
         monsterObj.style.left = currentLeft + 'px';
         monsterObj.style.bottom = currentBottom + 'px';
 
@@ -493,7 +492,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       feedbackBox.innerHTML = `<strong>💀 GAME OVER</strong><br>${reason}`;
 
       monsterObj.style.left = '160px';
-      monsterObj.style.bottom = '55px';
+      monsterObj.style.bottom = '25px';
 
       setTimeout(() => {
         currentRoom = 1;
