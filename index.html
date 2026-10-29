@@ -135,8 +135,8 @@
       position: absolute;
       left: 115px;
       top: 55px;
-      width: 20px;
-      height: 20px;
+      width: 25px;
+      height: 25px;
       background: radial-gradient(circle, #fff 0%, #fde047 50%, transparent 80%);
       border-radius: 50%;
       opacity: 0;
@@ -147,22 +147,21 @@
       animation: flashAnim 0.15s ease-out;
     }
     @keyframes flashAnim {
-      0% { transform: scale(1.5); opacity: 1; }
+      0% { transform: scale(1.8); opacity: 1; }
       100% { transform: scale(0.2); opacity: 0; }
     }
 
-    /* Монстр: розгорнутий обличчям до героя через scaleX(-1) + природний крок */
+    /* Монстр з анімацією кроку */
     .monster-layer {
       right: 30px;
       height: 145px;
-      transform: scaleX(-1);
       animation: monsterWalk 0.7s infinite ease-in-out;
       transition: right 0.1s linear, opacity 0.4s ease;
     }
 
     @keyframes monsterWalk {
-      0%, 100% { transform: scaleX(-1) translateY(0) rotate(0deg); }
-      50% { transform: scaleX(-1) translateY(-4px) rotate(1deg); }
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-4px) rotate(-1deg); }
     }
 
     /* Анімація пострілу героя (віддача) */
@@ -180,8 +179,8 @@
       animation: monsterExplode 0.5s ease-out forwards !important;
     }
     @keyframes monsterExplode {
-      0% { opacity: 1; transform: scaleX(-1) scale(1) translateY(0); }
-      100% { opacity: 0; transform: scaleX(-1) scale(0.2) rotate(-25deg) translateY(-60px); filter: drop-shadow(0 0 20px #ef4444); }
+      0% { opacity: 1; transform: scale(1) translateY(0); }
+      100% { opacity: 0; transform: scale(0.2) rotate(25deg) translateY(-60px); filter: drop-shadow(0 0 20px #ef4444); }
     }
 
     /* Анімація атаки монстра */
@@ -189,9 +188,9 @@
       animation: monsterLunge 0.4s ease-in forwards !important;
     }
     @keyframes monsterLunge {
-      0% { transform: scaleX(-1) scale(1); }
-      50% { transform: scaleX(-1) scale(1.2) translateX(-30px); }
-      100% { transform: scaleX(-1) scale(1.3) translateX(-60px); }
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2) translateX(-30px); }
+      100% { transform: scale(1.3) translateX(-60px); }
     }
 
     .timer-bar-container {
@@ -393,122 +392,23 @@
     let currentRoom = 1;
     let score = 0;
     let currentData = null;
-    let askedSentences = []; // Масив для відстеження використаних питань, щоб вони не повторювались
+    let askedSentences = []; // Масив для уникнення повторення питань
 
     let timerInterval = null;
-    const maxTime = 22.5; // Зменшено на 25% (було 30, стало 22.5 для вищої швидкості)
+    const maxTime = 22.5; // Зменшено на 25% (швидше пересування)
     let timeLeft = maxTime;
 
-    // Веб-синтезатор звуків та фонової музики
-    let audioCtx = null;
-    let ambientInterval = null;
-    let breathInterval = null;
+    // Підключення аудіофайлів, наданих користувачем
+    const ambientMusic = new Audio('ambient_music.mp3');
+    ambientMusic.loop = true;
+    ambientMusic.volume = 0.4;
 
-    function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-      startAmbientMusic();
-    }
+    const shotSound = new Audio('shot.mp3');
+    const monsterBreath = new Audio('monster_breath.mp3');
+    monsterBreath.loop = true;
+    monsterBreath.volume = 0.5;
 
-    // Фонова напружена музика (низькі гудіння/амбієнт)
-    function startAmbientMusic() {
-      if (ambientInterval) return;
-      ambientInterval = setInterval(() => {
-        if (!audioCtx || gamePanel.classList.contains('hidden')) return;
-        try {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(55, audioCtx.currentTime); // Низька нота A1
-          osc.frequency.exponentialRampToValueAtTime(35, audioCtx.currentTime + 3);
-          
-          gain.gain.setValueAtTime(0.015, audioCtx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 1.5);
-          gain.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 3.5);
-
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 3.5);
-        } catch(e) {}
-      }, 4000);
-    }
-
-    // Звук дихання монстра під час ходьби
-    function startMonsterBreath() {
-      if (breathInterval) clearInterval(breathInterval);
-      breathInterval = setInterval(() => {
-        if (!audioCtx || gamePanel.classList.contains('hidden')) return;
-        try {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(80, audioCtx.currentTime);
-          osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.6);
-
-          gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.7);
-
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.7);
-        } catch(e) {}
-      }, 1500);
-    }
-
-    // Звук пострілу з пістолета
-    function playShootSound() {
-      if (!audioCtx) return;
-      try {
-        const bufferSize = audioCtx.sampleRate * 0.3;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          data[i] = Math.random() * 2 - 1; // Білий шум для вибуху
-        }
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
-
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
-        filter.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-
-        noise.connect(filter);
-        filter.connect(gain);
-        gain.connect(audioCtx.destination);
-        noise.start();
-      } catch(e) {}
-    }
-
-    // Крик монстра при влучанні
-    function playMonsterScream() {
-      if (!audioCtx) return;
-      try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.4);
-
-        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.4);
-
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.4);
-      } catch(e) {}
-    }
+    const monsterScream = new Audio('monster_scream.mp3');
 
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) apiKeyInput.value = savedKey;
@@ -519,8 +419,11 @@
 
       setupPanel.classList.add('hidden');
       gamePanel.classList.remove('hidden');
-      initAudio();
-      askedSentences = []; // Очистити історію питань при новому запуску
+
+      // Запуск музики фону
+      ambientMusic.play().catch(e => console.log("Audio autoplay restricted"));
+
+      askedSentences = [];
       loadNewRoom();
     });
 
@@ -537,6 +440,10 @@
       roomCounter.textContent = `Chamber: ${currentRoom}`;
       sentenceText.textContent = 'Preparing next challenge...';
 
+      // Відтворення звуку дихання монстра при появі
+      monsterBreath.currentTime = 0;
+      monsterBreath.play().catch(e => {});
+
       const apiKey = apiKeyInput.value.trim();
       const theme = themeSelect.value;
       const level = levelSelect.value;
@@ -544,7 +451,6 @@
       if (!apiKey) {
         useFallbackChallenge();
         startTimer();
-        startMonsterBreath();
         return;
       }
 
@@ -577,7 +483,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
         
         currentData = JSON.parse(rawText);
-        askedSentences.push(currentData.sentence); // Зберігаємо в історію, щоб уникнути повторів
+        askedSentences.push(currentData.sentence);
         sentenceText.textContent = currentData.sentence;
         renderOptions(currentData.options);
       } catch (err) {
@@ -585,13 +491,11 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       }
 
       startTimer();
-      startMonsterBreath();
     }
 
     function useFallbackChallenge() {
-      // Фільтруємо ті, що вже були у сеансі
       const available = fallbackDatabase.filter(item => !askedSentences.includes(item.sentence));
-      if (available.length === 0) askedSentences = []; // Скидання якщо всі використані
+      if (available.length === 0) askedSentences = [];
       
       const pool = available.length > 0 ? available : fallbackDatabase;
       const randomIndex = Math.floor(Math.random() * pool.length);
@@ -637,7 +541,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
 
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
-          if (breathInterval) clearInterval(breathInterval);
+          monsterBreath.pause();
           monsterSprite.classList.add('monster-attack');
           triggerGameOver(`Time is up! The correct word was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
         }
@@ -648,7 +552,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       if (!currentData) return;
       
       clearInterval(timerInterval);
-      if (breathInterval) clearInterval(breathInterval);
+      monsterBreath.pause();
       optionsContainer.style.display = 'none';
       feedbackBox.classList.remove('hidden');
 
@@ -662,9 +566,12 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         
         sentenceText.innerHTML = currentData.sentence.replace('_____', `<b style="color: #38bdf8; text-decoration: underline;">${currentData.missingWord}</b>`);
         
-        // Відтворення звуків та анімацій пострілу
-        playShootSound();
-        playMonsterScream();
+        // Відтворення звуків пострілу та крику монстра
+        shotSound.currentTime = 0;
+        shotSound.play().catch(e => {});
+        monsterScream.currentTime = 0;
+        monsterScream.play().catch(e => {});
+
         heroSprite.classList.add('hero-shoot');
         muzzleFlash.classList.add('active');
         monsterSprite.classList.add('monster-die');
@@ -679,7 +586,8 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
 
     function triggerGameOver(reason) {
       clearInterval(timerInterval);
-      if (breathInterval) clearInterval(breathInterval);
+      monsterBreath.pause();
+      ambientMusic.pause();
       optionsContainer.style.display = 'none';
       feedbackBox.classList.remove('hidden');
       feedbackBox.className = 'feedback-box error';
