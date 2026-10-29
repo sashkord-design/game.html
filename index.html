@@ -152,9 +152,9 @@
       100% { transform: scale(0.2); opacity: 0; }
     }
 
-    /* Монстр (рухається через стиль left від правого краю до пістолета) */
+    /* Монстр */
     .monster-layer {
-      left: 450px; /* Початкова позиція справа */
+      left: 450px; 
       height: 145px;
       animation: monsterWalk 0.7s infinite ease-in-out;
       transition: opacity 0.4s ease;
@@ -463,10 +463,10 @@
     const maxTime = 18.0; 
     let timeLeft = maxTime;
 
-    // Фонова музика (зроблена ще на 20% тихішою, об'єм 0.24)
+    // Фонова музика (тихіша ще на 20%, тепер volume = 0.19)
     const ambientMusic = new Audio('ambient_music.mp3');
     ambientMusic.loop = true;
-    ambientMusic.volume = 0.24;
+    ambientMusic.volume = 0.19;
 
     const shotSound = new Audio('shot.mp3');
     const monsterBreath = new Audio('monster_breath.mp3');
@@ -597,8 +597,8 @@ Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at 
         timerBar.style.width = percentage + '%';
 
         const sceneWidth = document.querySelector('.pixel-scene').offsetWidth;
-        const startLeft = sceneWidth - 180; // Стартова позиція монстра справа
-        const endLeft = 115; // Точна позиція пістолета солдата зліва
+        const startLeft = sceneWidth - 180; 
+        const endLeft = 210; // Збільшено координату, щоб монстр зупинявся раніше (рівно на позиції як на вашому скріншоті)
         
         const progress = 1 - (timeLeft / maxTime);
         const currentLeft = startLeft - (progress * (startLeft - endLeft));
@@ -609,7 +609,7 @@ Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at 
           timerBar.style.backgroundColor = '#ef4444';
         }
 
-        // Рівно в момент дотику пістолета настає поразка
+        // Рівно в момент досягнення цієї позиції настає Game Over
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
           monsterBreath.pause();
