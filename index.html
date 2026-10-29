@@ -154,6 +154,7 @@
 
     /* Монстр */
     .monster-layer {
+      left: 450px; 
       height: 145px;
       animation: monsterWalk 0.7s infinite ease-in-out;
       transition: opacity 0.4s ease;
@@ -459,13 +460,14 @@
     let askedSentences = [];
 
     let timerInterval = null;
-    const maxTime = 18.0; 
+    // Зменшили час до 13.5 секунд, щоб монстр рухався помітно швидше і доходив у ту саму секунду, коли закінчується таймер
+    const maxTime = 13.5; 
     let timeLeft = maxTime;
 
-    // Фонова музика (ще на 20% тихіше, тепер volume = 0.15)
+    // Фонова музика (ще на 20% тихіше, тепер volume = 0.12)
     const ambientMusic = new Audio('ambient_music.mp3');
     ambientMusic.loop = true;
-    ambientMusic.volume = 0.15;
+    ambientMusic.volume = 0.12;
 
     const shotSound = new Audio('shot.mp3');
     const monsterBreath = new Audio('monster_breath.mp3');
@@ -597,18 +599,18 @@ Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at 
 
         const sceneWidth = document.querySelector('.pixel-scene').offsetWidth;
         const startLeft = sceneWidth - 160; 
-        const endLeft = 210; // Жорстко синхронізована кінцева точка з позицією на скріншоті
+        const endLeft = 210; // Цільова позиція зупинки монстра
         
         const progress = 1 - (timeLeft / maxTime);
         const currentLeft = startLeft - (progress * (startLeft - endLeft));
         
         monsterSprite.style.left = currentLeft + 'px';
 
-        if (timeLeft <= 6) {
+        if (timeLeft <= 5) {
           timerBar.style.backgroundColor = '#ef4444';
         }
 
-        // Таймер закінчується секунда в секунду з досягненням монстром цієї позиції
+        // Таймер закінчується секунда в секунду з досягненням монстром цілі
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
           monsterBreath.pause();
