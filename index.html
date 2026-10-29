@@ -158,20 +158,15 @@
       display: inline-block;
     }
 
-    /* Точне позиціонування: Двері та герой праворуч ближче до нас */
+    /* Позиції: Монстр зліва внизу, Герой з пістолетом праворуч */
     .monster-obj { left: 15px; bottom: 15px; }
-    .hero-obj { right: 35px; bottom: 35px; }
-    .door-obj { right: 15px; bottom: 15px; }
+    .hero-obj { right: 25px; bottom: 25px; }
 
-    .door-sprite {
-      font-size: 2.4rem;
-      transform: rotateZ(38deg) rotateX(-58deg) translateY(-15px);
-      transition: transform 0.5s ease, opacity 0.5s ease;
-    }
-
-    .door-open .door-sprite {
-      transform: rotateZ(38deg) rotateX(-58deg) translateY(-60px) scale(0.7);
-      opacity: 0.3;
+    /* Ефект пострілу та знищення монстра */
+    .monster-defeated .iso-sprite {
+      transform: rotateZ(38deg) rotateX(-58deg) translateY(0px) scale(0.2);
+      opacity: 0;
+      filter: drop-shadow(0 0 10px #38bdf8);
     }
 
     /* Панель з 4 варіантами */
@@ -254,7 +249,7 @@
   <div class="container">
     <header>
       <h1>Escape Room 3D</h1>
-      <p style="color: var(--text-sub)">Isometric Vocabulary Quest</p>
+      <p style="color: var(--text-sub)">Vocabulary & Shooter Quest</p>
     </header>
 
     <div class="setup-panel" id="setupPanel">
@@ -276,9 +271,9 @@
         <div class="col">
           <label>Grammar Level</label>
           <select id="levelSelect">
-            <option value="Intermediate">Intermediate (Mixed Tenses)</option>
-            <option value="Advanced">Advanced (Complex Structures)</option>
-            <option value="Business">Business / Formal</option>
+            <option value="Intermediate">Intermediate (1 Blank)</option>
+            <option value="Advanced">Advanced (1 Blank, Complex)</option>
+            <option value="Expert">Expert (2+ Blanks Hard)</option>
           </select>
         </div>
       </div>
@@ -288,7 +283,7 @@
     <div class="game-panel hidden" id="gamePanel">
       <div class="stats-bar">
         <span id="roomCounter">Chamber: 1</span>
-        <span id="scoreCounter">Escaped: 0</span>
+        <span id="scoreCounter">Defeated: 0</span>
       </div>
 
       <div class="timer-bar-container">
@@ -300,11 +295,8 @@
           <div class="iso-object monster-obj" id="monsterObj">
             <span class="iso-sprite">👾</span>
           </div>
-          <div class="iso-object door-obj" id="doorObj">
-            <span class="iso-sprite door-sprite">🚪</span>
-          </div>
           <div class="iso-object hero-obj" id="heroObj">
-            <span class="iso-sprite">🧍‍♂️</span>
+            <span class="iso-sprite" id="heroSprite">🤠🔫</span>
           </div>
         </div>
       </div>
@@ -320,11 +312,12 @@
 
       <div class="feedback-box" id="feedbackBox"></div>
       
-      <button id="nextRoomBtn" class="hidden">Enter Next Chamber ➔</button>
+      <button id="nextRoomBtn" class="hidden">Next Chamber ➔</button>
     </div>
   </div>
 
   <script>
+    // Розширена локальна база завдань на випадок автономної гри або лімітів
     const fallbackDatabase = [
       {
         sentence: "The heavy storm managed to _____ power supplies across the entire city.",
@@ -355,6 +348,24 @@
         missingWord: "threaten",
         options: ["protect", "threaten", "improve", "save"],
         explanation: "Дієслово 'threaten' (загрожувати) вживається у цьому контексті."
+      },
+      {
+        sentence: "She decided to _____ her career path and start a completely new project.",
+        missingWord: "shift",
+        options: ["shift", "freeze", "delay", "stop"],
+        explanation: "'Shift' означає змінити напрямок або переключитися."
+      },
+      {
+        sentence: "Successful entrepreneurs must learn how to _____ risks in volatile markets.",
+        missingWord: "mitigate",
+        options: ["mitigate", "increase", "ignore", "hide"],
+        explanation: "'Mitigate' означає пом'якшувати або зменшувати ризики."
+      },
+      {
+        sentence: "The research team gathered _____ data before publishing their final report.",
+        missingWord: "empirical",
+        options: ["empirical", "fake", "random", "vague"],
+        explanation: "'Empirical' означає заснований на досвіді та доведених даних."
       }
     ];
 
@@ -374,8 +385,7 @@
     const timerBar = document.getElementById('timerBar');
 
     const monsterObj = document.getElementById('monsterObj');
-    const heroObj = document.getElementById('heroObj');
-    const doorObj = document.getElementById('doorObj');
+    const heroSprite = document.getElementById('heroSprite');
 
     let currentRoom = 1;
     let score = 0;
@@ -402,9 +412,10 @@
       feedbackBox.classList.add('hidden');
       nextRoomBtn.classList.add('hidden');
       
+      monsterObj.classList.remove('monster-defeated');
       monsterObj.style.left = '15px';
       monsterObj.style.bottom = '15px';
-      doorObj.classList.remove('door-open');
+      heroSprite.textContent = '🤠🔫';
 
       roomCounter.textContent = `Chamber: ${currentRoom}`;
       sentenceText.textContent = 'Preparing next challenge...';
@@ -423,10 +434,11 @@
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-      const prompt = `Act as an English survival game engine. Generate a sentence with ONE missing word based on theme "${theme}" and grammar level "${level}".
+      const isExpert = level === 'Expert';
+      const prompt = `Act as an advanced English survival game engine. Generate a sentence with ${isExpert ? 'TWO' : 'ONE'} missing word(s) based on theme "${theme}" and grammar level "${level}".
 Return ONLY a raw JSON object (no markdown backticks) with exact keys:
-- "sentence": "Sentence with _____ for the missing word."
-- "missingWord": "the correct missing word"
+- "sentence": "Sentence with _____ (and _____ if expert) for the missing word(s)."
+- "missingWord": "the correct missing word (or comma separated if two)"
 - "options": ["option1", "option2", "option3", "option4"] (shuffled array containing the missingWord and 3 plausible distractors)
 - "explanation": "A short, clear explanation in Ukrainian why this word is correct."`;
 
@@ -512,11 +524,17 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
 
       if (userAns === correctAns) {
         score++;
-        scoreCounter.textContent = `Escaped: ${score}`;
+        scoreCounter.textContent = `Defeated: ${score}`;
         feedbackBox.className = 'feedback-box success';
-        feedbackBox.innerHTML = `<strong>🎉 Correct! Door unlocked!</strong><br>${currentData.explanation}`;
         
-        doorObj.classList.add('door-open');
+        // Підставляємо правильне слово замість пропуску
+        sentenceText.innerHTML = currentData.sentence.replace('_____', `<b style="color: #38bdf8; text-decoration: underline;">${currentData.missingWord}</b>`);
+        
+        // Герой стріляє, монстр знищується
+        heroSprite.textContent = '🤠🔥';
+        monsterObj.classList.add('monster-defeated');
+
+        feedbackBox.innerHTML = `<strong>💥 Boom! Monster eliminated!</strong><br>${currentData.explanation}`;
         nextRoomBtn.classList.remove('hidden');
       } else {
         triggerGameOver(`Wrong word! Correct was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
