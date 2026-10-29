@@ -395,20 +395,20 @@
     let askedSentences = []; // Масив для уникнення повторення питань
 
     let timerInterval = null;
-    const maxTime = 22.5; // Зменшено на 25% (швидше пересування)
+    const maxTime = 22.5; // Швидше пересування
     let timeLeft = maxTime;
 
-    // Підключення аудіофайлів, наданих користувачем
-    const ambientMusic = new Audio('ambient_music.mp3');
+    // Підключення ваших аудіофайлів з точними назвами та форматом .m4a
+    const ambientMusic = new Audio('ambient_music.mp3 (фонова музика).mp3');
     ambientMusic.loop = true;
     ambientMusic.volume = 0.4;
 
-    const shotSound = new Audio('shot.mp3');
-    const monsterBreath = new Audio('monster_breath.mp3');
+    const shotSound = new Audio('shot.mp3 (постріл).mp3');
+    const monsterBreath = new Audio('monster_breath.mp3 (дихання монстра).mp3');
     monsterBreath.loop = true;
-    monsterBreath.volume = 0.5;
+    monsterBreath.volume = 0.6;
 
-    const monsterScream = new Audio('monster_scream.mp3');
+    const monsterScream = new Audio('monster_scream.mp3 (крик монстра).mp3');
 
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) apiKeyInput.value = savedKey;
@@ -420,7 +420,7 @@
       setupPanel.classList.add('hidden');
       gamePanel.classList.remove('hidden');
 
-      // Запуск музики фону
+      // Запуск фонової музики
       ambientMusic.play().catch(e => console.log("Audio autoplay restricted"));
 
       askedSentences = [];
@@ -440,7 +440,7 @@
       roomCounter.textContent = `Chamber: ${currentRoom}`;
       sentenceText.textContent = 'Preparing next challenge...';
 
-      // Відтворення звуку дихання монстра при появі
+      // Відтворення звуку дихання монстра у новій кімнаті
       monsterBreath.currentTime = 0;
       monsterBreath.play().catch(e => {});
 
@@ -566,7 +566,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         
         sentenceText.innerHTML = currentData.sentence.replace('_____', `<b style="color: #38bdf8; text-decoration: underline;">${currentData.missingWord}</b>`);
         
-        // Відтворення звуків пострілу та крику монстра
+        // Відтворення ваших аудіофайлів пострілу та крику
         shotSound.currentTime = 0;
         shotSound.play().catch(e => {});
         monsterScream.currentTime = 0;
