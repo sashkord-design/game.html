@@ -158,10 +158,10 @@
       display: inline-block;
     }
 
-    /* Точне позиціонування за твоїм малюнком */
+    /* Точне позиціонування: Двері та герой біля переднього правого краю */
     .monster-obj { left: 15px; bottom: 15px; }
-    .hero-obj { right: 25px; bottom: 25px; }
-    .door-obj { right: 10px; bottom: 10px; }
+    .hero-obj { right: 80px; bottom: 30px; }
+    .door-obj { right: 70px; bottom: 10px; }
 
     .door-sprite {
       font-size: 2.4rem;
@@ -172,6 +172,31 @@
     .door-open .door-sprite {
       transform: rotateZ(38deg) rotateX(-58deg) translateY(-60px) scale(0.7);
       opacity: 0.3;
+    }
+
+    /* Панель з 4 варіантами відповідей */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+    }
+
+    .option-btn {
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.8rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      text-align: center;
+    }
+
+    .option-btn:hover {
+      background-color: #1e293b;
+      border-color: #38bdf8;
     }
 
     .timer-bar-container {
@@ -286,9 +311,12 @@
 
       <div class="sentence-box" id="sentenceText">Loading next challenge...</div>
 
-      <div class="row" id="inputRow">
-        <input type="text" id="answerInput" placeholder="Type the missing word...">
-        <button id="submitBtn">Submit</button>
+      <!-- Панель з 4 варіантами відповідей -->
+      <div class="options-grid" id="optionsContainer">
+        <button class="option-btn" onclick="checkAnswer(this.textContent)">-</button>
+        <button class="option-btn" onclick="checkAnswer(this.textContent)">-</button>
+        <button class="option-btn" onclick="checkAnswer(this.textContent)">-</button>
+        <button class="option-btn" onclick="checkAnswer(this.textContent)">-</button>
       </div>
 
       <div class="feedback-box" id="feedbackBox"></div>
@@ -302,27 +330,32 @@
       {
         sentence: "The heavy storm managed to _____ power supplies across the entire city.",
         missingWord: "disrupt",
+        options: ["disrupt", "connect", "enhance", "maintain"],
         explanation: "Слово 'disrupt' означає порушувати нормальний хід процесу або роботи."
       },
       {
         sentence: "He was advised by his doctor because he is slightly _____ and needs more cardio.",
         missingWord: "overweight",
+        options: ["fit", "overweight", "active", "slim"],
         explanation: "'Overweight' — прикметник, що означає наявність надлишкової ваги."
       },
       {
         sentence: "The ancient painting was preserved in the national _____ for decades.",
         missingWord: "museum",
+        options: ["market", "factory", "museum", "station"],
         explanation: "У контексті культури та мистецтва об'єктом зберігання є музей (museum)."
       },
       {
         sentence: "Political leaders tried to _____ an agreement before the summit ended.",
         missingWord: "reach",
+        options: ["break", "reach", "forget", "lose"],
         explanation: "Стійкий вираз 'to reach an agreement' (досягти угоди)."
       },
       {
         sentence: "Climate change continues to _____ natural habitats worldwide.",
         missingWord: "threaten",
-        explanation: "Дієслово 'threaten' (загрожувати) вживається у теперішньому тривалому часі."
+        options: ["protect", "threaten", "improve", "save"],
+        explanation: "Дієслово 'threaten' (загрожувати) вживається у цьому контексті."
       }
     ];
 
@@ -336,8 +369,7 @@
     const roomCounter = document.getElementById('roomCounter');
     const scoreCounter = document.getElementById('scoreCounter');
     const sentenceText = document.getElementById('sentenceText');
-    const answerInput = document.getElementById('answerInput');
-    const submitBtn = document.getElementById('submitBtn');
+    const optionsContainer = document.getElementById('optionsContainer');
     const feedbackBox = document.getElementById('feedbackBox');
     const nextRoomBtn = document.getElementById('nextRoomBtn');
     const timerBar = document.getElementById('timerBar');
@@ -367,9 +399,7 @@
     });
 
     async function loadNewRoom() {
-      answerInput.value = '';
-      answerInput.disabled = false;
-      submitBtn.classList.remove('hidden');
+      optionsContainer.style.display = 'grid';
       feedbackBox.classList.add('hidden');
       nextRoomBtn.classList.add('hidden');
       
@@ -394,11 +424,12 @@
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-      const prompt = `Act as an English survival game engine. Generate a sentence with ONE missing word (represented by blanks like "_____") based on the theme "${theme}" and grammar level "${level}".
+      const prompt = `Act as an English survival game engine. Generate a sentence with ONE missing word based on theme "${theme}" and grammar level "${level}".
 Return ONLY a raw JSON object (no markdown backticks) with exact keys:
-- "sentence": "The sentence with _____ for the missing word."
-- "missingWord": "the exact missing word in base form or correct tense"
-- "explanation": "A short, clear explanation in Ukrainian why this word/form is correct and what it means."`;
+- "sentence": "Sentence with _____ for the missing word."
+- "missingWord": "the correct missing word"
+- "options": ["option1", "option2", "option3", "option4"] (shuffled array containing the missingWord and 3 plausible distractors)
+- "explanation": "A short, clear explanation in Ukrainian why this word is correct."`;
 
       try {
         const response = await fetch(endpoint, {
@@ -417,6 +448,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         
         currentData = JSON.parse(rawText);
         sentenceText.textContent = currentData.sentence;
+        renderOptions(currentData.options);
       } catch (err) {
         useFallbackChallenge();
       }
@@ -428,6 +460,17 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       const randomIndex = Math.floor(Math.random() * fallbackDatabase.length);
       currentData = fallbackDatabase[randomIndex];
       sentenceText.textContent = currentData.sentence;
+      renderOptions(currentData.options);
+    }
+
+    function renderOptions(options) {
+      const buttons = optionsContainer.querySelectorAll('.option-btn');
+      options.forEach((opt, index) => {
+        if (buttons[index]) {
+          buttons[index].textContent = opt;
+          buttons[index].disabled = false;
+        }
+      });
     }
 
     function startTimer() {
@@ -442,8 +485,8 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         timerBar.style.width = percentage + '%';
 
         const progress = 1 - (timeLeft / maxTime);
-        const currentLeft = 15 + (progress * 130);
-        const currentBottom = 15 + (progress * 10);
+        const currentLeft = 15 + (progress * 55);
+        const currentBottom = 15 + (progress * 15);
         monsterObj.style.left = currentLeft + 'px';
         monsterObj.style.bottom = currentBottom + 'px';
 
@@ -458,17 +501,15 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       }, 100);
     }
 
-    function checkAnswer() {
+    function checkAnswer(selectedWord) {
       if (!currentData) return;
-      const userAns = answerInput.value.trim().toLowerCase();
-      const correctAns = currentData.missingWord.toLowerCase();
-
-      if (!userAns) return;
-
+      
       clearInterval(timerInterval);
-      answerInput.disabled = true;
-      submitBtn.classList.add('hidden');
+      optionsContainer.style.display = 'none';
       feedbackBox.classList.remove('hidden');
+
+      const userAns = selectedWord.trim().toLowerCase();
+      const correctAns = currentData.missingWord.toLowerCase();
 
       if (userAns === correctAns) {
         score++;
@@ -485,14 +526,13 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
 
     function triggerGameOver(reason) {
       clearInterval(timerInterval);
-      answerInput.disabled = true;
-      submitBtn.classList.add('hidden');
+      optionsContainer.style.display = 'none';
       feedbackBox.classList.remove('hidden');
       feedbackBox.className = 'feedback-box error';
       feedbackBox.innerHTML = `<strong>💀 GAME OVER</strong><br>${reason}`;
 
-      monsterObj.style.left = '160px';
-      monsterObj.style.bottom = '25px';
+      monsterObj.style.left = '75px';
+      monsterObj.style.bottom = '35px';
 
       setTimeout(() => {
         currentRoom = 1;
@@ -501,11 +541,6 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         gamePanel.classList.add('hidden');
       }, 6000);
     }
-
-    submitBtn.addEventListener('click', checkAnswer);
-    answerInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') checkAnswer();
-    });
 
     nextRoomBtn.addEventListener('click', () => {
       currentRoom++;
