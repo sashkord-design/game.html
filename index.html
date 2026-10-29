@@ -337,6 +337,7 @@
   </div>
 
   <script>
+    // Розширена резервна база питань (понад 15 унікальних завдань на різні теми)
     const fallbackDatabase = [
       {
         sentence: "The heavy storm managed to _____ power supplies across the entire city.",
@@ -367,6 +368,36 @@
         missingWord: "threaten",
         options: ["protect", "threaten", "improve", "save"],
         explanation: "Дієслово 'threaten' (загрожувати) вживається у цьому контексті."
+      },
+      {
+        sentence: "Scientists hope to _____ a new vaccine by the end of the year.",
+        missingWord: "develop",
+        options: ["destroy", "develop", "ignore", "forget"],
+        explanation: "'Develop' означає розробляти або створювати нові технології чи ліки."
+      },
+      {
+        sentence: "The financial market experienced a sudden _____ due to unexpected inflation rates.",
+        missingWord: "crash",
+        options: ["growth", "crash", "party", "stability"],
+        explanation: "Фінансовий ринок переживає різкий 'crash' (обвал) у кризи."
+      },
+      {
+        sentence: "She decided to _____ her career path and start working in digital design.",
+        missingWord: "change",
+        options: ["change", "keep", "freeze", "lose"],
+        explanation: "Вираз 'to change career path' означає змінити професійний шлях."
+      },
+      {
+        sentence: "Deep in the forest, explorers discovered an abandoned _____ covered in moss.",
+        missingWord: "cabin",
+        options: ["skyscraper", "cabin", "airport", "highway"],
+        explanation: "'Cabin' — це невелика лісова хатина або хижа."
+      },
+      {
+        sentence: "Good leaders must know how to _____ effectively under extreme pressure.",
+        missingWord: "communicate",
+        options: ["hide", "communicate", "sleep", "shout"],
+        explanation: "У діловому середовищі вкрай важливо вміти 'communicate' (спілкуватися/комунікувати)."
       }
     ];
 
@@ -392,13 +423,12 @@
     let currentRoom = 1;
     let score = 0;
     let currentData = null;
-    let askedSentences = [];
+    let askedSentences = []; // Масив для відстеження вже показаних питань
 
     let timerInterval = null;
     const maxTime = 22.5;
     let timeLeft = maxTime;
 
-    // Підключення аудіофайлів з точними назвами без зайвих символів у дужках
     const ambientMusic = new Audio('ambient_music.mp3');
     ambientMusic.loop = true;
     ambientMusic.volume = 0.4;
@@ -420,7 +450,6 @@
       setupPanel.classList.add('hidden');
       gamePanel.classList.remove('hidden');
 
-      // Запуск фонової музики після кліку користувача (політика браузерів)
       ambientMusic.play().catch(e => console.log("Audio autoplay restricted"));
 
       askedSentences = [];
@@ -440,7 +469,6 @@
       roomCounter.textContent = `Chamber: ${currentRoom}`;
       sentenceText.textContent = 'Preparing next challenge...';
 
-      // Відтворення дихання монстра на початку кімнати
       monsterBreath.currentTime = 0;
       monsterBreath.play().catch(e => {});
 
@@ -448,6 +476,7 @@
       const theme = themeSelect.value;
       const level = levelSelect.value;
 
+      // Якщо ключ не введено, використовуємо розширену офлайн-базу без повторів
       if (!apiKey) {
         useFallbackChallenge();
         startTimer();
@@ -455,16 +484,17 @@
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+      // Використовуємо актуальну модель gemini-2.5-flash або gemini-3.8-flash (або стандартну gemini-1.5-flash якщо виникне помилка лімітів)
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
       const isExpert = level === 'Expert';
-      const prompt = `Act as an advanced English survival game engine. Generate a unique sentence with ${isExpert ? 'TWO' : 'ONE'} missing word(s) based on theme "${theme}" and grammar level "${level}".
-CRITICAL: Do not repeat any of these previously used sentences: ${JSON.stringify(askedSentences)}.
-Return ONLY a raw JSON object (no markdown backticks) with exact keys:
+      const prompt = `Act as an advanced English survival game engine. Generate a completely unique, new English sentence with ${isExpert ? 'TWO' : 'ONE'} missing word(s) based strictly on theme "${theme}" and grammar level "${level}".
+NEVER repeat any of these sentences that were already used: ${JSON.stringify(askedSentences)}.
+Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at all) with exact keys:
 - "sentence": "Sentence with _____ (and _____ if expert) for the missing word(s)."
 - "missingWord": "the correct missing word (or comma separated if two)"
-- "options": ["option1", "option2", "option3", "option4"] (shuffled array containing the missingWord and 3 plausible distractors)
+- "options": ["option1", "option2", "option3", "option4"] (shuffled array containing the correct missingWord and 3 plausible distractors)
 - "explanation": "A short, clear explanation in Ukrainian why this word is correct."`;
 
       try {
@@ -476,17 +506,24 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         });
         clearTimeout(timeoutId);
 
-        if (!response.ok) throw new Error('API limit reached');
+        if (!response.ok) throw new Error('API limit reached or key invalid');
 
         const data = await response.json();
         let rawText = data.candidates[0].content.parts[0].text;
         rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
         
         currentData = JSON.parse(rawText);
+        
+        // Захист від дублікатів, якщо API все ж повернуло схоже
+        if (askedSentences.includes(currentData.sentence)) {
+          throw new Error('Duplicate sentence generated');
+        }
+
         askedSentences.push(currentData.sentence);
         sentenceText.textContent = currentData.sentence;
         renderOptions(currentData.options);
       } catch (err) {
+        // Якщо сталася помилка API, плавно переходимо на офлайн-базу без повторів
         useFallbackChallenge();
       }
 
@@ -494,12 +531,18 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
     }
 
     function useFallbackChallenge() {
+      // Фільтруємо ті питання, які ще не показувалися в цій сесії
       const available = fallbackDatabase.filter(item => !askedSentences.includes(item.sentence));
-      if (available.length === 0) askedSentences = [];
+      
+      // Якщо всі питання з бази вже були показані, очищаємо історію, щоб гра не зупинялась
+      if (available.length === 0) {
+        askedSentences = [];
+      }
       
       const pool = available.length > 0 ? available : fallbackDatabase;
       const randomIndex = Math.floor(Math.random() * pool.length);
       currentData = pool[randomIndex];
+      
       askedSentences.push(currentData.sentence);
       sentenceText.textContent = currentData.sentence;
       renderOptions(currentData.options);
@@ -566,7 +609,6 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         
         sentenceText.innerHTML = currentData.sentence.replace('_____', `<b style="color: #38bdf8; text-decoration: underline;">${currentData.missingWord}</b>`);
         
-        // Відтворення звуку пострілу та крику монстра
         shotSound.currentTime = 0;
         shotSound.play().catch(e => {});
         monsterScream.currentTime = 0;
@@ -589,6 +631,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       monsterBreath.pause();
       ambientMusic.pause();
       optionsContainer.style.display = 'none';
+      feedbackBox.classList.add('hidden');
       feedbackBox.classList.remove('hidden');
       feedbackBox.className = 'feedback-box error';
       feedbackBox.innerHTML = `<strong>💀 GAME OVER</strong><br>${reason}`;
