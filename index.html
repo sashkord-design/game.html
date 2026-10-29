@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escape Vocab Room 3D</title>
+  <title>Vocab Survival: Sketch Edition</title>
   <style>
     :root {
       --bg-color: #090d16;
@@ -94,14 +94,16 @@
     button:hover { background-color: #0369a1; }
     button:active { transform: scale(0.98); }
 
-    /* --- ІЗОМЕТРИЧНА КІМНАТА 3D --- */
-    .iso-viewport {
-      height: 220px;
+    /* --- НОВИЙ В'ЮПОРТ У СТИЛІ НАРИСУ --- */
+    .sketch-viewport {
+      height: 240px;
       width: 100%;
-      background: radial-gradient(circle at center, #1e293b 0%, #090d16 80%);
+      /* Білий фон з точковою сіткою, як на нарисі */
+      background-color: #ffffff;
+      background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+      background-size: 16px 16px;
       border-radius: 12px;
-      border: 1px solid var(--border-color);
-      perspective: 800px;
+      border: 2px solid #000000;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -109,91 +111,44 @@
       position: relative;
     }
 
-    .iso-room {
-      width: 280px;
-      height: 180px;
-      background-color: #1e293b;
-      background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-      background-size: 28px 28px;
-      transform: rotateX(58deg) rotateZ(-38deg);
-      transform-style: preserve-3d;
-      box-shadow: -15px 15px 30px rgba(0,0,0,0.8), inset 0 0 0 2px #38bdf8;
+    .sketch-scene {
+      width: 100%;
+      height: 100%;
       position: relative;
     }
 
-    .iso-room::before {
-      content: '';
+    /* Стилізація персонажів-емайконів для 2D-сцени */
+    .sketch-object {
       position: absolute;
-      top: -35px; left: 0;
-      width: 100%; height: 35px;
-      background: #0f172a;
-      transform: rotateX(-90deg);
-      transform-origin: bottom;
-      border-top: 2px solid #38bdf8;
-    }
-
-    .iso-room::after {
-      content: '';
-      position: absolute;
-      top: 0; right: -35px;
-      width: 35px; height: 100%;
-      background: #111827;
-      transform: rotateY(90deg);
-      transform-origin: left;
-      border-right: 2px solid #0284c7;
-    }
-
-    .iso-object {
-      position: absolute;
-      transform-style: preserve-3d;
       transition: all 0.3s linear;
+      font-size: 3rem; /* Величезні емайкони */
     }
 
-    .iso-sprite {
-      font-size: 2.6rem;
-      transform: rotateZ(38deg) rotateX(-58deg) translateY(-20px);
-      filter: drop-shadow(4px 8px 5px rgba(0,0,0,0.7));
-      display: inline-block;
+    /* Герой-паличка з пістолетом, як на нарисі */
+    .hero-obj {
+      left: 50px;
+      bottom: 20px;
+      color: #000000;
     }
 
-    /* Позиції: Монстр зліва внизу, Герой з пістолетом праворуч */
-    .monster-obj { left: 15px; bottom: 15px; }
-    .hero-obj { right: 25px; bottom: 25px; }
+    /* Монстр-емайкон, що рухається по прямій */
+    .monster-obj {
+      right: 50px;
+      bottom: 20px;
+      color: #000000;
+    }
 
-    /* Ефект пострілу та знищення монстра */
+    /* Ефект знищення монстра */
     .monster-defeated .iso-sprite {
-      transform: rotateZ(38deg) rotateX(-58deg) translateY(0px) scale(0.2);
-      opacity: 0;
-      filter: drop-shadow(0 0 10px #38bdf8);
+      animation: scatter 0.5s ease-out forwards;
     }
 
-    /* Панель з 4 варіантами */
-    .options-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.8rem;
+    @keyframes scatter {
+      0% { opacity: 1; transform: scale(1) translate(0, 0); }
+      100% { opacity: 0; transform: scale(0.2) translate(100px, -100px); filter: blur(5px); }
     }
 
-    .option-btn {
-      background-color: #0f172a;
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      padding: 0.8rem;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s, border-color 0.2s;
-      text-align: center;
-    }
-
-    .option-btn:hover {
-      background-color: #1e293b;
-      border-color: #38bdf8;
-    }
-
+    /* Таймер-шкала */
     .timer-bar-container {
       width: 100%;
       height: 6px;
@@ -229,6 +184,30 @@
       border-left: 4px solid #38bdf8;
     }
 
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+    }
+
+    .option-btn {
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.8rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      text-align: center;
+    }
+
+    .option-btn:hover {
+      background-color: #1e293b;
+      border-color: #38bdf8;
+    }
+
     .feedback-box {
       background: #0f172a;
       padding: 1rem;
@@ -248,8 +227,8 @@
 
   <div class="container">
     <header>
-      <h1>Escape Room 3D</h1>
-      <p style="color: var(--text-sub)">Vocabulary & Shooter Quest</p>
+      <h1>Vocab Survival: Sketch Edition</h1>
+      <p style="color: var(--text-sub)">English Practice with Stickman Hero</p>
     </header>
 
     <div class="setup-panel" id="setupPanel">
@@ -290,13 +269,14 @@
         <div class="timer-bar" id="timerBar"></div>
       </div>
 
-      <div class="iso-viewport">
-        <div class="iso-room">
-          <div class="iso-object monster-obj" id="monsterObj">
-            <span class="iso-sprite">👾</span>
-          </div>
-          <div class="iso-object hero-obj" id="heroObj">
-            <span class="iso-sprite" id="heroSprite">🤠🔫</span>
+      <!-- НОВИЙ В'ЮПОРТ У СТИЛІ НАРИСУ -->
+      <div class="sketch-viewport">
+        <div class="sketch-scene">
+          <!-- Герой-паличка з нарису, як емайкон -->
+          <div class="sketch-object hero-obj" id="heroObj">🚶‍♂️🔫</div>
+          <!-- Монстр з нарису, як емайкон -->
+          <div class="sketch-object monster-obj" id="monsterObj">
+            <span class="iso-sprite">🐲</span>
           </div>
         </div>
       </div>
@@ -317,7 +297,6 @@
   </div>
 
   <script>
-    // Розширена локальна база завдань на випадок автономної гри або лімітів
     const fallbackDatabase = [
       {
         sentence: "The heavy storm managed to _____ power supplies across the entire city.",
@@ -348,24 +327,6 @@
         missingWord: "threaten",
         options: ["protect", "threaten", "improve", "save"],
         explanation: "Дієслово 'threaten' (загрожувати) вживається у цьому контексті."
-      },
-      {
-        sentence: "She decided to _____ her career path and start a completely new project.",
-        missingWord: "shift",
-        options: ["shift", "freeze", "delay", "stop"],
-        explanation: "'Shift' означає змінити напрямок або переключитися."
-      },
-      {
-        sentence: "Successful entrepreneurs must learn how to _____ risks in volatile markets.",
-        missingWord: "mitigate",
-        options: ["mitigate", "increase", "ignore", "hide"],
-        explanation: "'Mitigate' означає пом'якшувати або зменшувати ризики."
-      },
-      {
-        sentence: "The research team gathered _____ data before publishing their final report.",
-        missingWord: "empirical",
-        options: ["empirical", "fake", "random", "vague"],
-        explanation: "'Empirical' означає заснований на досвіді та доведених даних."
       }
     ];
 
@@ -385,7 +346,7 @@
     const timerBar = document.getElementById('timerBar');
 
     const monsterObj = document.getElementById('monsterObj');
-    const heroSprite = document.getElementById('heroSprite');
+    const heroObj = document.getElementById('heroObj');
 
     let currentRoom = 1;
     let score = 0;
@@ -395,6 +356,7 @@
     let timeLeft = 30;
     const maxTime = 30;
 
+    // Зберігаємо та завантажуємо API ключ з localStorage
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) apiKeyInput.value = savedKey;
 
@@ -408,14 +370,15 @@
     });
 
     async function loadNewRoom() {
+      // Скидання інтерфейсу
       optionsContainer.style.display = 'grid';
       feedbackBox.classList.add('hidden');
       nextRoomBtn.classList.add('hidden');
       
+      // Скидання анімації та позиції монстра на вихідну (по прямій)
       monsterObj.classList.remove('monster-defeated');
-      monsterObj.style.left = '15px';
-      monsterObj.style.bottom = '15px';
-      heroSprite.textContent = '🤠🔫';
+      monsterObj.style.right = '50px';
+      heroObj.textContent = '🚶‍♂️🔫'; // Герой тримає зброю
 
       roomCounter.textContent = `Chamber: ${currentRoom}`;
       sentenceText.textContent = 'Preparing next challenge...';
@@ -424,12 +387,14 @@
       const theme = themeSelect.value;
       const level = levelSelect.value;
 
+      // Завантаження автономних даних, якщо немає ключа
       if (!apiKey) {
         useFallbackChallenge();
         startTimer();
         return;
       }
 
+      // Запит до Gemini API
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
@@ -484,6 +449,7 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       });
     }
 
+    // ЛОГІКА ТАЙМЕРА ТА РУХУ МОНСТРА ПО ПРЯМІЙ
     function startTimer() {
       clearInterval(timerInterval);
       timeLeft = maxTime;
@@ -495,11 +461,15 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         const percentage = (timeLeft / maxTime) * 100;
         timerBar.style.width = percentage + '%';
 
+        // Рух монстра по прямій: від right: 50px до hero_pos (left: 50px)
+        const sceneWidth = document.querySelector('.sketch-scene').offsetWidth;
+        const startRight = 50;
+        const endRight = sceneWidth - 110; // Позиція прямо перед героєм
+        
         const progress = 1 - (timeLeft / maxTime);
-        const currentLeft = 15 + (progress * 90);
-        const currentBottom = 15 + (progress * 15);
-        monsterObj.style.left = currentLeft + 'px';
-        monsterObj.style.bottom = currentBottom + 'px';
+        const currentRight = startRight + (progress * (endRight - startRight));
+        
+        monsterObj.style.right = currentRight + 'px';
 
         if (timeLeft <= 10) {
           timerBar.style.backgroundColor = '#ef4444';
@@ -527,17 +497,17 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         scoreCounter.textContent = `Defeated: ${score}`;
         feedbackBox.className = 'feedback-box success';
         
-        // Підставляємо правильне слово замість пропуску
-        sentenceText.innerHTML = currentData.sentence.replace('_____', `<b style="color: #38bdf8; text-decoration: underline;">${currentData.missingWord}</b>`);
+        // Підстановка слова
+        sentenceText.innerHTML = currentData.sentence.replace('_____', `<b style="color: #0284c7; text-decoration: underline;">${currentData.missingWord}</b>`);
         
-        // Герой стріляє, монстр знищується
-        heroSprite.textContent = '🤠🔥';
+        // Герой стріляє, монстр вмирає (анімація scatter)
+        heroObj.textContent = '🚶‍♂️🔥';
         monsterObj.classList.add('monster-defeated');
 
-        feedbackBox.innerHTML = `<strong>💥 Boom! Monster eliminated!</strong><br>${currentData.explanation}`;
+        feedbackBox.innerHTML = `<strong>💥 Boom! Headshot!</strong><br>${currentData.explanation}`;
         nextRoomBtn.classList.remove('hidden');
       } else {
-        triggerGameOver(`Wrong word! Correct was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
+        triggerGameOver(`Wrong word! The correct answer was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
       }
     }
 
@@ -548,8 +518,9 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
       feedbackBox.className = 'feedback-box error';
       feedbackBox.innerHTML = `<strong>💀 GAME OVER</strong><br>${reason}`;
 
-      monsterObj.style.left = '115px';
-      monsterObj.style.bottom = '30px';
+      // Монстр стикається з героєм
+      const sceneWidth = document.querySelector('.sketch-scene').offsetWidth;
+      monsterObj.style.right = (sceneWidth - 110) + 'px';
 
       setTimeout(() => {
         currentRoom = 1;
