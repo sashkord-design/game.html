@@ -123,17 +123,18 @@
       pointer-events: none;
     }
 
-    /* Герой */
+    /* Герой (фіксована позиція зліва) */
     .hero-layer {
-      left: 30px;
+      left: 20px;
       height: 135px;
       transition: transform 0.1s ease;
+      z-index: 2;
     }
 
     /* Дульний спалах від пістолета */
     .muzzle-flash {
       position: absolute;
-      left: 115px;
+      left: 105px;
       top: 55px;
       width: 25px;
       height: 25px;
@@ -151,17 +152,54 @@
       100% { transform: scale(0.2); opacity: 0; }
     }
 
-    /* Монстр з анімацією кроку */
+    /* Монстр */
     .monster-layer {
-      right: 30px;
+      right: 20px;
       height: 145px;
       animation: monsterWalk 0.7s infinite ease-in-out;
-      transition: right 0.1s linear, opacity 0.4s ease;
+      transition: opacity 0.4s ease;
+      z-index: 3;
     }
 
     @keyframes monsterWalk {
       0%, 100% { transform: translateY(0) rotate(0deg); }
       50% { transform: translateY(-4px) rotate(-1deg); }
+    }
+
+    /* Оверлей GAME OVER на всю картинку */
+    .game-over-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.82);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .game-over-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .game-over-overlay h2 {
+      font-size: 3rem;
+      color: #ef4444;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+    }
+    .game-over-overlay p {
+      color: var(--text-sub);
+      font-size: 1.05rem;
+      text-align: center;
+      padding: 0 1rem;
     }
 
     /* Анімація пострілу героя (віддача) */
@@ -181,16 +219,6 @@
     @keyframes monsterExplode {
       0% { opacity: 1; transform: scale(1) translateY(0); }
       100% { opacity: 0; transform: scale(0.2) rotate(25deg) translateY(-60px); filter: drop-shadow(0 0 20px #ef4444); }
-    }
-
-    /* Анімація атаки монстра */
-    .monster-attack {
-      animation: monsterLunge 0.4s ease-in forwards !important;
-    }
-    @keyframes monsterLunge {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.2) translateX(-30px); }
-      100% { transform: scale(1.3) translateX(-60px); }
     }
 
     .timer-bar-container {
@@ -314,10 +342,16 @@
       </div>
 
       <div class="pixel-viewport">
-        <div class="pixel-scene">
+        <div class="pixel-scene" id="pixelScene">
           <img src="soldier 1.png" id="heroSprite" class="layer-sprite hero-layer" alt="Hero">
           <div class="muzzle-flash" id="muzzleFlash"></div>
           <img src="monster 1.png" id="monsterSprite" class="layer-sprite monster-layer" alt="Monster">
+          
+          <!-- Напис GAME OVER на всю картинку -->
+          <div class="game-over-overlay" id="gameOverOverlay">
+            <h2>Game Over</h2>
+            <p id="gameOverReason">The monster reached you!</p>
+          </div>
         </div>
       </div>
 
@@ -337,7 +371,6 @@
   </div>
 
   <script>
-    // Розширена резервна база питань (понад 15 унікальних завдань на різні теми)
     const fallbackDatabase = [
       {
         sentence: "The heavy storm managed to _____ power supplies across the entire city.",
@@ -416,6 +449,8 @@
     const nextRoomBtn = document.getElementById('nextRoomBtn');
     const timerBar = document.getElementById('timerBar');
     const muzzleFlash = document.getElementById('muzzleFlash');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const gameOverReason = document.getElementById('gameOverReason');
 
     const monsterSprite = document.getElementById('monsterSprite');
     const heroSprite = document.getElementById('heroSprite');
@@ -423,15 +458,16 @@
     let currentRoom = 1;
     let score = 0;
     let currentData = null;
-    let askedSentences = []; // Масив для відстеження вже показаних питань
+    let askedSentences = [];
 
     let timerInterval = null;
-    const maxTime = 22.5;
+    const maxTime = 18.0; // Динамічний час, що ідеально синхронізований з дистанцією
     let timeLeft = maxTime;
 
+    // Фонова музика (тихіша ще на 25%, об'єм 0.3)
     const ambientMusic = new Audio('ambient_music.mp3');
     ambientMusic.loop = true;
-    ambientMusic.volume = 0.4;
+    ambientMusic.volume = 0.3;
 
     const shotSound = new Audio('shot.mp3');
     const monsterBreath = new Audio('monster_breath.mp3');
@@ -449,6 +485,7 @@
 
       setupPanel.classList.add('hidden');
       gamePanel.classList.remove('hidden');
+      gameOverOverlay.classList.remove('active');
 
       ambientMusic.play().catch(e => console.log("Audio autoplay restricted"));
 
@@ -460,9 +497,9 @@
       optionsContainer.style.display = 'grid';
       feedbackBox.classList.add('hidden');
       nextRoomBtn.classList.add('hidden');
+      gameOverOverlay.classList.remove('active');
       
-      monsterSprite.classList.remove('monster-die', 'monster-attack');
-      monsterSprite.style.right = '30px';
+      monsterSprite.classList.remove('monster-die');
       heroSprite.classList.remove('hero-shoot');
       muzzleFlash.classList.remove('active');
 
@@ -476,7 +513,6 @@
       const theme = themeSelect.value;
       const level = levelSelect.value;
 
-      // Якщо ключ не введено, використовуємо розширену офлайн-базу без повторів
       if (!apiKey) {
         useFallbackChallenge();
         startTimer();
@@ -486,7 +522,6 @@
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-      // Використовуємо актуальну модель gemini-2.5-flash або gemini-3.8-flash (або стандартну gemini-1.5-flash якщо виникне помилка лімітів)
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
       const isExpert = level === 'Expert';
       const prompt = `Act as an advanced English survival game engine. Generate a completely unique, new English sentence with ${isExpert ? 'TWO' : 'ONE'} missing word(s) based strictly on theme "${theme}" and grammar level "${level}".
@@ -514,7 +549,6 @@ Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at 
         
         currentData = JSON.parse(rawText);
         
-        // Захист від дублікатів, якщо API все ж повернуло схоже
         if (askedSentences.includes(currentData.sentence)) {
           throw new Error('Duplicate sentence generated');
         }
@@ -523,7 +557,6 @@ Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at 
         sentenceText.textContent = currentData.sentence;
         renderOptions(currentData.options);
       } catch (err) {
-        // Якщо сталася помилка API, плавно переходимо на офлайн-базу без повторів
         useFallbackChallenge();
       }
 
@@ -531,13 +564,8 @@ Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at 
     }
 
     function useFallbackChallenge() {
-      // Фільтруємо ті питання, які ще не показувалися в цій сесії
       const available = fallbackDatabase.filter(item => !askedSentences.includes(item.sentence));
-      
-      // Якщо всі питання з бази вже були показані, очищаємо історію, щоб гра не зупинялась
-      if (available.length === 0) {
-        askedSentences = [];
-      }
+      if (available.length === 0) askedSentences = [];
       
       const pool = available.length > 0 ? available : fallbackDatabase;
       const randomIndex = Math.floor(Math.random() * pool.length);
@@ -570,23 +598,24 @@ Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at 
         timerBar.style.width = percentage + '%';
 
         const sceneWidth = document.querySelector('.pixel-scene').offsetWidth;
-        const startRight = 30;
-        const endRight = sceneWidth - 140; 
+        const startRight = 20;
+        // Точна зупинка монстра впритул до спрайта солдата (ліворуч)
+        const endRight = sceneWidth - 145; 
         
         const progress = 1 - (timeLeft / maxTime);
         const currentRight = startRight + (progress * (endRight - startRight));
         
         monsterSprite.style.right = currentRight + 'px';
 
-        if (timeLeft <= 8) {
+        if (timeLeft <= 6) {
           timerBar.style.backgroundColor = '#ef4444';
         }
 
+        // Рівно в момент дотику (коли час сплив) настає смерть
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
           monsterBreath.pause();
-          monsterSprite.classList.add('monster-attack');
-          triggerGameOver(`Time is up! The correct word was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
+          triggerGameOver(`The monster caught you! The correct word was: <b>${currentData.missingWord}</b>.`);
         }
       }, 100);
     }
@@ -621,7 +650,6 @@ Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at 
         feedbackBox.innerHTML = `<strong>💥 Direct Hit! Monster Eliminated!</strong><br>${currentData.explanation}`;
         nextRoomBtn.classList.remove('hidden');
       } else {
-        monsterSprite.classList.add('monster-attack');
         triggerGameOver(`Wrong word! The correct answer was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
       }
     }
@@ -632,16 +660,18 @@ Return ONLY a raw JSON object (no markdown backticks, no markdown formatting at 
       ambientMusic.pause();
       optionsContainer.style.display = 'none';
       feedbackBox.classList.add('hidden');
-      feedbackBox.classList.remove('hidden');
-      feedbackBox.className = 'feedback-box error';
-      feedbackBox.innerHTML = `<strong>💀 GAME OVER</strong><br>${reason}`;
+      
+      // Показуємо великий оверлей Game Over на всю картинку
+      gameOverReason.innerHTML = reason;
+      gameOverOverlay.classList.add('active');
 
       setTimeout(() => {
         currentRoom = 1;
         score = 0;
+        gameOverOverlay.classList.remove('active');
         setupPanel.classList.remove('hidden');
         gamePanel.classList.add('hidden');
-      }, 6000);
+      }, 5000);
     }
 
     nextRoomBtn.addEventListener('click', () => {
