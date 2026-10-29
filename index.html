@@ -94,13 +94,14 @@
     button:hover { background-color: #0369a1; }
     button:active { transform: scale(0.98); }
 
-    /* --- ЧИСТИЙ ЕПІЧНИЙ ПІКСЕЛЬ-АРТ В'ЮПОРТ --- */
+    /* --- ІГРОВИЙ В'ЮПОРТ ІЗ ЗАТВЕРДЖЕНИМИ ФАЙЛАМИ --- */
     .pixel-viewport {
-      height: 260px;
+      height: 280px;
       width: 100%;
-      background-image: url('background.png');
+      /* Використовуємо background 2.png */
+      background-image: url('background 2.png');
       background-size: cover;
-      background-position: center;
+      background-position: center bottom;
       border-radius: 12px;
       border: 2px solid var(--border-color);
       display: flex;
@@ -116,23 +117,53 @@
       position: relative;
     }
 
-    /* Ефекти для всієї сцени при пострілі чи атаці */
-    .hero-shooting {
-      animation: screenShake 0.3s ease;
+    .layer-sprite {
+      position: absolute;
+      bottom: 15px;
+      user-select: none;
+      pointer-events: none;
     }
-    @keyframes screenShake {
+
+    /* Герой (soldier 1.png) */
+    .hero-layer {
+      left: 30px;
+      height: 135px;
+      transition: transform 0.1s ease;
+    }
+
+    /* Монстр (monster 1.png) — оскільки він дивиться вправо за замовчуванням, розгортаємо його вліво через scaleX(-1) */
+    .monster-layer {
+      right: 30px;
+      height: 145px;
+      transform: scaleX(-1);
+      transition: right 0.1s linear, opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    /* Анімація пострілу героя */
+    .hero-shoot {
+      animation: shootRecoil 0.25s ease-in-out;
+    }
+    @keyframes shootRecoil {
       0% { transform: translateX(0); }
-      25% { transform: translateX(-4px); }
-      50% { transform: translateX(4px); }
+      30% { transform: translateX(8px) scale(1.02); }
       100% { transform: translateX(0); }
     }
 
-    .monster-defeated-flash {
-      animation: flashEffect 0.5s ease-out;
+    /* Анімація знищення монстра */
+    .monster-die {
+      opacity: 0 !important;
+      transform: scaleX(-1) scale(0.2) rotate(20deg) translateY(-80px) !important;
+      filter: drop-shadow(0 0 20px #ef4444);
     }
-    @keyframes flashEffect {
-      0% { filter: brightness(2) drop-shadow(0 0 20px #38bdf8); }
-      100% { filter: brightness(1); }
+
+    /* Анімація атаки монстра (набіг) */
+    .monster-attack {
+      animation: monsterLunge 0.4s ease-in forwards;
+    }
+    @keyframes monsterLunge {
+      0% { transform: scaleX(-1) scale(1); }
+      50% { transform: scaleX(-1) scale(1.2) translateX(30px); }
+      100% { transform: scaleX(-1) scale(1.3) translateX(60px); }
     }
 
     .timer-bar-container {
@@ -214,7 +245,7 @@
   <div class="container">
     <header>
       <h1>Vocab Survival</h1>
-      <p style="color: var(--text-sub)">Apocalyptic English Shooter</p>
+      <p style="color: var(--text-sub)">Apocalyptic Pixel Art Quest</p>
     </header>
 
     <div class="setup-panel" id="setupPanel">
@@ -255,10 +286,11 @@
         <div class="timer-bar" id="timerBar"></div>
       </div>
 
-      <!-- ЧИСТИЙ В'ЮПОРТ ІЗ ТВОЇМ ПІКСЕЛЬНИМ ФОНОМ -->
-      <div class="pixel-viewport" id="viewport">
-        <div class="pixel-scene" id="scene">
-          <!-- Персонажі повністю інтегровані у тло референсу, анімація керується таймером -->
+      <div class="pixel-viewport">
+        <div class="pixel-scene">
+          <!-- Використовуємо точні назви завантажених файлів -->
+          <img src="soldier 1.png" id="heroSprite" class="layer-sprite hero-layer" alt="Hero">
+          <img src="monster 1.png" id="monsterSprite" class="layer-sprite monster-layer" alt="Monster">
         </div>
       </div>
 
@@ -325,7 +357,9 @@
     const feedbackBox = document.getElementById('feedbackBox');
     const nextRoomBtn = document.getElementById('nextRoomBtn');
     const timerBar = document.getElementById('timerBar');
-    const viewport = document.getElementById('viewport');
+
+    const monsterSprite = document.getElementById('monsterSprite');
+    const heroSprite = document.getElementById('heroSprite');
 
     let currentRoom = 1;
     let score = 0;
@@ -352,7 +386,9 @@
       feedbackBox.classList.add('hidden');
       nextRoomBtn.classList.add('hidden');
       
-      viewport.classList.remove('hero-shooting', 'monster-defeated-flash');
+      monsterSprite.classList.remove('monster-die', 'monster-attack');
+      monsterSprite.style.right = '30px';
+      heroSprite.classList.remove('hero-shoot');
 
       roomCounter.textContent = `Chamber: ${currentRoom}`;
       sentenceText.textContent = 'Preparing next challenge...';
@@ -432,12 +468,22 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         const percentage = (timeLeft / maxTime) * 100;
         timerBar.style.width = percentage + '%';
 
+        const sceneWidth = document.querySelector('.pixel-scene').offsetWidth;
+        const startRight = 30;
+        const endRight = sceneWidth - 140; 
+        
+        const progress = 1 - (timeLeft / maxTime);
+        const currentRight = startRight + (progress * (endRight - startRight));
+        
+        monsterSprite.style.right = currentRight + 'px';
+
         if (timeLeft <= 10) {
           timerBar.style.backgroundColor = '#ef4444';
         }
 
         if (timeLeft <= 0) {
           clearInterval(timerInterval);
+          monsterSprite.classList.add('monster-attack');
           triggerGameOver(`Time is up! The correct word was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
         }
       }, 100);
@@ -460,12 +506,13 @@ Return ONLY a raw JSON object (no markdown backticks) with exact keys:
         
         sentenceText.innerHTML = currentData.sentence.replace('_____', `<b style="color: #38bdf8; text-decoration: underline;">${currentData.missingWord}</b>`);
         
-        // Ефект пострілу та перемоги на тлі
-        viewport.classList.add('hero-shooting', 'monster-defeated-flash');
+        heroSprite.classList.add('hero-shoot');
+        monsterSprite.classList.add('monster-die');
 
         feedbackBox.innerHTML = `<strong>💥 Direct Hit! Monster Eliminated!</strong><br>${currentData.explanation}`;
         nextRoomBtn.classList.remove('hidden');
       } else {
+        monsterSprite.classList.add('monster-attack');
         triggerGameOver(`Wrong word! The correct answer was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
       }
     }
