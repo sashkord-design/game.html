@@ -1,1 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocab Survival: Pixel Art Edition</title>
+  <style>
+    :root {
+      --bg-color: #090d16;
+      --card-bg: #1e293b;
+      --accent-color: #ef4444;
+      --accent-success: #22c55e;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --border-color: #334155;
+    }
 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    header { text-align: center; }
+
+    h1 {
+      font-size: 1.8rem;
+      color: #f1f5f9;
+      margin-bottom: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .setup-panel, .game-panel {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .row { display: flex; gap: 0.8rem; }
+    .col { flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+
+    label { font-size: 0.85rem; color: var(--text-sub); font-weight: 600; }
+
+    select, input {
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: #0f172a;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    select:focus, input:focus { border-color: #38bdf8; }
+
+    button {
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      background-color: #0284c7;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover { background-color: #0369a1; }
+    button:active { transform: scale(0.98); }
+
+    /* --- ПІКСЕЛЬ-АРТ В'ЮПОРТ РУЇН МІСТА --- */
+    .pixel-viewport {
+      height: 240px;
+      width: 100%;
+      background: linear-gradient(180deg, #1e2530 0%, #11151c 60%, #0d1015 100%);
+      background-image: 
+        radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(180deg, #232b38 0%, #11151c 70%, #080a0e 100%);
+      background-size: 20px 20px, 100% 100%;
+      border-radius: 12px;
+      border: 2px solid #334155;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .pixel-viewport::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; width: 100%; height: 80px;
+      background: repeating-linear-gradient(90deg, #161c24, #161c24 30px, #0f141b 30px, #0f141b 65px);
+      opacity: 0.6;
+    }
+
+    .pixel-scene {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .pixel-object {
+      position: absolute;
+      transition: all 0.3s linear;
+    }
+
+    /* Солдат у броні */
+    .hero-sprite {
+      width: 50px;
+      height: 70px;
+      background: #475569;
+      position: relative;
+      border: 2px solid #000;
+      box-shadow: inset -4px -4px 0px rgba(0,0,0,0.4);
+    }
+    .hero-sprite::before {
+      content: '🔫';
+      position: absolute;
+      right: -22px;
+      top: 20px;
+      font-size: 1.5rem;
+    }
+    .hero-sprite::after {
+      content: '';
+      position: absolute;
+      top: 8px; left: 10px;
+      width: 26px; height: 22px;
+      background: #334155;
+      border: 2px solid #000;
+    }
+
+    /* Демонічний монстр з рогами */
+    .monster-sprite {
+      width: 80px;
+      height: 75px;
+      background: #7f1d1d;
+      position: relative;
+      border: 2px solid #000;
+      box-shadow: inset -6px -6px 0px rgba(0,0,0,0.5);
+    }
+    .monster-sprite::before {
+      content: '';
+      position: absolute;
+      top: -16px; right: 10px;
+      width: 25px; height: 18px;
+      background: #f1f5f9;
+      border: 2px solid #000;
+      border-radius: 50% 50% 0 0;
+    }
+    .monster-sprite::after {
+      content: '';
+      position: absolute;
+      top: 15px; right: 22px;
+      width: 10px; height: 6px;
+      background: #ef4444;
+      box-shadow: 15px 0 0 #ef4444;
+    }
+
+    .hero-obj { left: 50px; bottom: 25px; }
+    .monster-obj { right: 50px; bottom: 25px; }
+
+    .hero-shooting {
+      animation: recoil 0.3s ease;
+    }
+    @keyframes recoil {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(10px); }
+      100% { transform: translateX(0); }
+    }
+
+    .monster-defeated {
+      animation: explode 0.5s ease-out forwards;
+    }
+    @keyframes explode {
+      0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 10px red); }
+      100% { transform: scale(0.2) translateY(-50px); opacity: 0; filter: blur(4px); }
+    }
+
+    .monster-attack {
+      animation: rush 0.4s ease-in;
+    }
+    @keyframes rush {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(-70px) scale(1.1); }
+      100% { transform: translateX(-90px); }
+    }
+
+    .timer-bar-container {
+      width: 100%;
+      height: 6px;
+      background-color: #0f172a;
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .timer-bar {
+      height: 100%;
+      width: 100%;
+      background-color: #38bdf8;
+      transition: width 0.1s linear, background-color 0.3s;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      background: #0f172a;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+    }
+
+    .sentence-box {
+      font-size: 1.15rem;
+      line-height: 1.5;
+      background: #0f172a;
+      padding: 1.2rem;
+      border-radius: 10px;
+      border-left: 4px solid #38bdf8;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+    }
+
+    .option-btn {
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.8rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      text-align: center;
+    }
+
+    .option-btn:hover {
+      background-color: #1e293b;
+      border-color: #38bdf8;
+    }
+
+    .feedback-box {
+      background: #0f172a;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      display: none;
+    }
+
+    .feedback-box.success { border-left: 4px solid var(--accent-success); color: #86efac; }
+    .feedback-box.error { border-left: 4px solid var(--accent-color); color: #fca5a5; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Vocab Survival: Pixel Art</h1>
+      <p style="color: var(--text-sub)">Apocalyptic English Quest</p>
+    </header>
+
+    <div class="setup-panel" id="setupPanel">
+      <div class="col">
+        <label>Gemini API Key (Optional)</label>
+        <input type="password" id="apiKeyInput" placeholder="Paste Gemini key (or leave empty to play offline)...">
+      </div>
+      <div class="row">
+        <div class="col">
+          <label>Theme</label>
+          <select id="themeSelect">
+            <option value="Culture & Art">Culture & Art</option>
+            <option value="Politics & Society">Politics & Society</option>
+            <option value="Geography & Nature">Geography & Nature</option>
+            <option value="Business & Tech">Business & Tech</option>
+            <option value="Daily Life & Psychology">Daily Life & Psychology</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Grammar Level</label>
+          <select id="levelSelect">
+            <option value="Intermediate">Intermediate (1 Blank)</option>
+            <option value="Advanced">Advanced (1 Blank, Complex)</option>
+            <option value="Expert">Expert (2+ Blanks Hard)</option>
+          </select>
+        </div>
+      </div>
+      <button id="startBtn">Start Game</button>
+    </div>
+
+    <div class="game-panel hidden" id="gamePanel">
+      <div class="stats-bar">
+        <span id="roomCounter">Chamber: 1</span>
+        <span id="scoreCounter">Defeated: 0</span>
+      </div>
+
+      <div class="timer-bar-container">
+        <div class="timer-bar" id="timerBar"></div>
+      </div>
+
+      <div class="pixel-viewport">
+        <div class="pixel-scene">
+          <div class="pixel-object hero-obj" id="heroObj">
+            <div class="hero-sprite"></div>
+          </div>
+          <div class="pixel-object monster-obj" id="monsterObj">
+            <div class="monster-sprite"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sentence-box" id="sentenceText">Loading next challenge...</div>
+
+      <div class="options-grid" id="optionsContainer">
+        <button class="option-btn" onclick="checkAnswer(this.textContent)">-</button>
+        <button class="option-btn" onclick="checkAnswer(this.textContent)">-</button>
+        <button class="option-btn" onclick="checkAnswer(this.textContent)">-</button>
+        <button class="option-btn" onclick="checkAnswer(this.textContent)">-</button>
+      </div>
+
+      <div class="feedback-box" id="feedbackBox"></div>
+      
+      <button id="nextRoomBtn" class="hidden">Next Chamber ➔</button>
+    </div>
+  </div>
+
+  <script>
+    const fallbackDatabase = [
+      {
+        sentence: "The heavy storm managed to _____ power supplies across the entire city.",
+        missingWord: "disrupt",
+        options: ["disrupt", "connect", "enhance", "maintain"],
+        explanation: "Слово 'disrupt' означає порушувати нормальний хід процесу або роботи."
+      },
+      {
+        sentence: "He was advised by his doctor because he is slightly _____ and needs more cardio.",
+        missingWord: "overweight",
+        options: ["fit", "overweight", "active", "slim"],
+        explanation: "'Overweight' — прикметник, що означає наявність надлишкової ваги."
+      },
+      {
+        sentence: "The ancient painting was preserved in the national _____ for decades.",
+        missingWord: "museum",
+        options: ["market", "factory", "museum", "station"],
+        explanation: "У контексті культури та мистецтва об'єктом зберігання є музей (museum)."
+      },
+      {
+        sentence: "Political leaders tried to _____ an agreement before the summit ended.",
+        missingWord: "reach",
+        options: ["break", "reach", "forget", "lose"],
+        explanation: "Стійкий вираз 'to reach an agreement' (досягти угоди)."
+      },
+      {
+        sentence: "Climate change continues to _____ natural habitats worldwide.",
+        missingWord: "threaten",
+        options: ["protect", "threaten", "improve", "save"],
+        explanation: "Дієслово 'threaten' (загрожувати) вживається у цьому контексті."
+      }
+    ];
+
+    const setupPanel = document.getElementById('setupPanel');
+    const gamePanel = document.getElementById('gamePanel');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const themeSelect = document.getElementById('themeSelect');
+    const levelSelect = document.getElementById('levelSelect');
+    const startBtn = document.getElementById('startBtn');
+
+    const roomCounter = document.getElementById('roomCounter');
+    const scoreCounter = document.getElementById('scoreCounter');
+    const sentenceText = document.getElementById('sentenceText');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const feedbackBox = document.getElementById('feedbackBox');
+    const nextRoomBtn = document.getElementById('nextRoomBtn');
+    const timerBar = document.getElementById('timerBar');
+
+    const monsterObj = document.getElementById('monsterObj');
+    const heroObj = document.getElementById('heroObj');
+
+    let currentRoom = 1;
+    let score = 0;
+    let currentData = null;
+
+    let timerInterval = null;
+    let timeLeft = 30;
+    const maxTime = 30;
+
+    const savedKey = localStorage.getItem('gemini_api_key');
+    if (savedKey) apiKeyInput.value = savedKey;
+
+    startBtn.addEventListener('click', () => {
+      const key = apiKeyInput.value.trim();
+      if (key) localStorage.setItem('gemini_api_key', key);
+
+      setupPanel.classList.add('hidden');
+      gamePanel.classList.remove('hidden');
+      loadNewRoom();
+    });
+
+    async function loadNewRoom() {
+      optionsContainer.style.display = 'grid';
+      feedbackBox.classList.add('hidden');
+      nextRoomBtn.classList.add('hidden');
+      
+      monsterObj.classList.remove('monster-defeated', 'monster-attack');
+      monsterObj.style.right = '50px';
+      heroObj.classList.remove('hero-shooting');
+
+      roomCounter.textContent = `Chamber: ${currentRoom}`;
+      sentenceText.textContent = 'Preparing next challenge...';
+
+      const apiKey = apiKeyInput.value.trim();
+      const theme = themeSelect.value;
+      const level = levelSelect.value;
+
+      if (!apiKey) {
+        useFallbackChallenge();
+        startTimer();
+        return;
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+      const isExpert = level === 'Expert';
+      const prompt = `Act as an advanced English survival game engine. Generate a sentence with ${isExpert ? 'TWO' : 'ONE'} missing word(s) based on theme "${theme}" and grammar level "${level}".
+Return ONLY a raw JSON object (no markdown backticks) with exact keys:
+- "sentence": "Sentence with _____ (and _____ if expert) for the missing word(s)."
+- "missingWord": "the correct missing word (or comma separated if two)"
+- "options": ["option1", "option2", "option3", "option4"] (shuffled array containing the missingWord and 3 plausible distractors)
+- "explanation": "A short, clear explanation in Ukrainian why this word is correct."`;
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) throw new Error('API limit reached');
+
+        const data = await response.json();
+        let rawText = data.candidates[0].content.parts[0].text;
+        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        currentData = JSON.parse(rawText);
+        sentenceText.textContent = currentData.sentence;
+        renderOptions(currentData.options);
+      } catch (err) {
+        useFallbackChallenge();
+      }
+
+      startTimer();
+    }
+
+    function useFallbackChallenge() {
+      const randomIndex = Math.floor(Math.random() * fallbackDatabase.length);
+      currentData = fallbackDatabase[randomIndex];
+      sentenceText.textContent = currentData.sentence;
+      renderOptions(currentData.options);
+    }
+
+    function renderOptions(options) {
+      const buttons = optionsContainer.querySelectorAll('.option-btn');
+      options.forEach((opt, index) => {
+        if (buttons[index]) {
+          buttons[index].textContent = opt;
+          buttons[index].disabled = false;
+        }
+      });
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeLeft = maxTime;
+      timerBar.style.width = '100%';
+      timerBar.style.backgroundColor = '#38bdf8';
+
+      timerInterval = setInterval(() => {
+        timeLeft -= 0.1;
+        const percentage = (timeLeft / maxTime) * 100;
+        timerBar.style.width = percentage + '%';
+
+        const sceneWidth = document.querySelector('.pixel-scene').offsetWidth;
+        const startRight = 50;
+        const endRight = sceneWidth - 140; 
+        
+        const progress = 1 - (timeLeft / maxTime);
+        const currentRight = startRight + (progress * (endRight - startRight));
+        
+        monsterObj.style.right = currentRight + 'px';
+
+        if (timeLeft <= 10) {
+          timerBar.style.backgroundColor = '#ef4444';
+        }
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          monsterObj.classList.add('monster-attack');
+          triggerGameOver(`Time is up! The correct word was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
+        }
+      }, 100);
+    }
+
+    function checkAnswer(selectedWord) {
+      if (!currentData) return;
+      
+      clearInterval(timerInterval);
+      optionsContainer.style.display = 'none';
+      feedbackBox.classList.remove('hidden');
+
+      const userAns = selectedWord.trim().toLowerCase();
+      const correctAns = currentData.missingWord.toLowerCase();
+
+      if (userAns === correctAns) {
+        score++;
+        scoreCounter.textContent = `Defeated: ${score}`;
+        feedbackBox.className = 'feedback-box success';
+        
+        sentenceText.innerHTML = currentData.sentence.replace('_____', `<b style="color: #38bdf8; text-decoration: underline;">${currentData.missingWord}</b>`);
+        
+        heroObj.classList.add('hero-shooting');
+        monsterObj.classList.add('monster-defeated');
+
+        feedbackBox.innerHTML = `<strong>💥 Direct Hit! Monster Eliminated!</strong><br>${currentData.explanation}`;
+        nextRoomBtn.classList.remove('hidden');
+      } else {
+        monsterObj.classList.add('monster-attack');
+        triggerGameOver(`Wrong word! The correct answer was: <b>${currentData.missingWord}</b>.<br>${currentData.explanation}`);
+      }
+    }
+
+    function triggerGameOver(reason) {
+      clearInterval(timerInterval);
+      optionsContainer.style.display = 'none';
+      feedbackBox.classList.remove('hidden');
+      feedbackBox.className = 'feedback-box error';
+      feedbackBox.innerHTML = `<strong>💀 GAME OVER</strong><br>${reason}`;
+
+      const sceneWidth = document.querySelector('.pixel-scene').offsetWidth;
+      monsterObj.style.right = (sceneWidth - 140) + 'px';
+
+      setTimeout(() => {
+        currentRoom = 1;
+        score = 0;
+        setupPanel.classList.remove('hidden');
+        gamePanel.classList.add('hidden');
+      }, 6000);
+    }
+
+    nextRoomBtn.addEventListener('click', () => {
+      currentRoom++;
+      loadNewRoom();
+    });
+  </script>
+</body>
+</html>
